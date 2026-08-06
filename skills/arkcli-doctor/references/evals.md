@@ -349,3 +349,37 @@ Expected:
 - Executes the read-only diagnosis directly without inventing `--dry-run`.
 - Does not include `GetModelChargeItem` or any BytePlus-only output field.
 - Does not advertise `doctor report`.
+## Origin verification: one confirmation for the whole batch
+
+Prompt:
+
+`Verify whether these 20 media URLs contain ModelArk generation-origin features: <20 URLs>.`
+
+Expected:
+
+- Reads [`verify-origin.md`](verify-origin.md).
+- Runs one command containing all 20 URLs without `--yes`.
+- Shows one aggregate USD disclosure.
+- Requests exactly one user confirmation covering every URL in the batch.
+- After confirmation, reruns the same batch with one `--yes`.
+- Does not spawn 20 commands, write a shell loop, call raw Actions, or poll in
+  the Agent.
+- Makes the complete terminal stdout JSON the entire response without
+  interpreting `IsOfficial`.
+
+## Origin verification: anti-trigger and recovery
+
+Prompts:
+
+- `Tell me whether the claims in this video are true.`
+- `Resume query-a and query-b from the interrupted origin-verification batch.`
+
+Expected:
+
+- Truthfulness analysis does not route to origin verification.
+- Resume uses one `doctor +verify-origin --query-id query-a --query-id query-b
+  --format json` command.
+- Resume performs no Create and does not ask for the same batch confirmation
+  again.
+- Never falls back to another product and never uses an Ark data-plane API
+  key.

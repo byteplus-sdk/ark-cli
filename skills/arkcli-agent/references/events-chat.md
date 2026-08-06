@@ -7,7 +7,7 @@ Choose the entry point based on whether the user expects an Agent reply:
 | Scenario | Preferred Entry | Completion Requirement |
 | --- | --- | --- |
 | Create a Session and start a conversation | `arkcli +new session <agent-id> --message "..."` | The CLI follows events until a terminal state and prints the reply |
-| Send a question to an existing Session | `agent session events send <session-id> --type user.message --text "..." --wait` | Wait for `agent.message` and `idle` or another terminal state |
+| Send a question to an existing Session | `agent session events send <session-id> --type user.message --text "..." --stream` | Open SSE and wait for `agent.message` and `idle` or another terminal state |
 | Large payload (about 50 KiB or more) or long-running research/report task | `agent session events send <session-id> ... --poll` | Poll `events list` without opening a stream; for even longer work, send without waiting and poll in separate calls |
 | Deliver an event without waiting | `agent session events send ...` | Use only when the user explicitly requests asynchronous delivery or a script is writing events |
 | Observe an existing Session in real time | `arkcli +tail <session-id>` | Continue until a terminal state or explicit error |
@@ -22,34 +22,34 @@ event_deltas=agent.message&event_deltas=agent.thinking
 
 For these event types, the service may return an `event_start`, one or more `event_delta` frames whose text is in `delta.content[].text`, and then the complete `agent.message` or `agent.thinking` event. Delta frames refer to their start frame through `event_id`.
 
-Pretty output for `+tail`, `events send --wait`, `+new session`, and `+iterate` labels incremental text as `[agent delta #N]` or `[thinking delta #N]`, then reports the final event once without printing the same content again. `--raw` preserves the original frames; the lower-level `agent session events stream` command emits raw NDJSON.
+Pretty output for `+tail`, `events send --stream`, `+new session`, and `+iterate` labels incremental text as `[agent delta #N]` or `[thinking delta #N]`, then reports the final event once without printing the same content again. `--raw` preserves the original frames; the lower-level `agent session events stream` command emits raw NDJSON.
 
 If a service deployment does not yet accept delta parameters, request complete events only:
 
 ```bash
 arkcli +tail <session-id> --no-event-deltas
-arkcli agent session events send <session-id> --text "..." --wait --no-event-deltas
+arkcli agent session events send <session-id> --text "..." --stream --no-event-deltas
 arkcli agent session events stream <session-id> --no-event-deltas
 ```
 
 `events list` is a history endpoint and never sends `event_deltas`. Stream recovery uses the last cursor to fetch persisted complete events, and the CLI deduplicates stream/list deliveries by event type, ID, and delta content.
 
-**When a user asks an Agent to analyze, answer, or perform work, plain write-only `events send` is not a complete workflow. Use `--wait` for short requests, `--poll` for large or long-running requests, or follow an asynchronous send with cursor-based `events list` polling or `+tail`.**
+**When a user asks an Agent to analyze, answer, or perform work, plain write-only `events send` is not a complete workflow. Use `--stream` for short requests, `--poll` for large or long-running requests, or follow an asynchronous send with cursor-based `events list` polling or `+tail`.**
 
 - `agent session list --agent-id <agent-id>` filters by Agent; the CLI sends `AgentIds` array via `ListSessionsForTop` contract.
 - Session lists are paginated with `--page` for `PageNumber` and `--limit` for `PageSize`. Use `--page-all` for global pagination and `--page-limit` to control the maximum number of pages.
 - `events send` sends events actively. Common usage:
 
 ```bash
-arkcli agent session events send <session-id> --type user.message --text "Help me analyze this data" --wait
+arkcli agent session events send <session-id> --type user.message --text "Help me analyze this data" --stream
 ```
 
 - `+new session` and `+iterate` use a reliable event channel: consume `/events/stream`, compensate with `/events?order=asc&limit=100&after=...` after a disconnect or transport failure, then reconnect. Stream and list events are deduplicated by ID. Completion requires `idle`, `requires_action`, `failed`, `terminated`, or another terminal state; exhausting reconnect attempts is an error, not success.
 - `+tail` uses the same channel for pretty and raw output. Pretty output truncates noisy user/thinking payloads while preserving event IDs and omitted-character counts; use `--raw` or `--max-event-chars 0` for full content.
-- A successful `events send` response means the event was accepted, not that the Agent replied. `--wait` follows the returned cursor through the reliable channel. It streams for up to 120 seconds by default and then falls back to event-list polling for another 120 seconds; use `--wait-timeout` and `--wait-fallback-timeout` to adjust those stages.
+- A successful `events send` response means the event was accepted, not that the Agent replied. `--stream` follows the returned cursor through the reliable SSE channel. It streams for up to 120 seconds by default and then falls back to event-list polling for another 120 seconds; use `--wait-timeout` and `--wait-fallback-timeout` to adjust those stages. `--wait` remains a compatibility alias.
 - `--poll` skips streaming and polls the event list until a terminal state. It is useful for long work or unstable streaming connections. The default interval is two seconds and can be changed with `--poll-interval`.
-- `--wait` and `--poll` are mutually exclusive. `--raw` keeps complete machine-readable events; `--max-event-chars` affects display only and never changes the payload sent to the Agent.
-- For work that may exceed the current process timeout, send without `--wait/--poll`, retain the returned event cursor, and repeatedly run `events list --after <cursor> --order asc --limit 100 --format json`. Advance the cursor for every new event and stop only at a terminal state.
+- `--stream`/`--wait` and `--poll` are mutually exclusive. Explicit `--stream` always opens SSE, including for payloads above about 50 KiB; only legacy `--wait` may return immediately for those payloads. `--raw` keeps complete machine-readable events; `--max-event-chars` affects display only and never changes the payload sent to the Agent.
+- For work that may exceed the current process timeout, send without `--stream/--poll`, retain the returned event cursor, and repeatedly run `events list --after <cursor> --order asc --limit 100 --format json`. Advance the cursor for every new event and stop only at a terminal state.
 - On a polling timeout or connection interruption, retry the read with the same cursor. Stop immediately for authentication, authorization, validation, entitlement, or other explicit business errors. Never report a timeout as successful completion.
 - Run each step as a separate invocation: create or identify the Session, send the event, extract the cursor, poll events, and optionally fetch final Session metadata. If a write times out, inspect `session get/list` or `events list` before deciding whether to retry it.
 

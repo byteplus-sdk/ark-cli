@@ -1,7 +1,7 @@
 ---
 name: arkcli-doctor
 version: 1.0.0
-description: "BytePlus arkcli doctor diagnostic gateway for CLI health, account, error, infer-endpoint, model, and ModelArk/VMP metrics. Use for error codes or error JSON; model/Endpoint failure, slowness, timeout, rate limit, health, or quota diagnosis; DNS/TCP/TLS/clock/signature checks; real-name verification, balance, IAM/VMP/TOS readiness; named metrics, time series, or ark_* PromQL; and unsupported doctor report requests. A model or Endpoint identifier always routes to doctor model/infer-endpoint before standalone metrics or error lookup; error JSON without a resource routes to doctor error even if authentication-related. Do not use for installation/login changes, profile/API-key management, pure usage, deployment or Endpoint lifecycle, model metadata/pricing, or raw OpenAPI exploration. BytePlus has no doctor report; explain without invoking, previewing, suggesting, or emulating it."
+description: "BytePlus arkcli doctor gateway for CLI, account, error, model, Endpoint and ModelArk/VMP diagnosis, plus ModelArk generation-origin verification for 1-20 media URLs. Origin verification uses doctor +verify-origin: disclose one aggregate batch price, wait for one confirmation covering the whole batch, then relay the complete terminal JSON without interpreting IsOfficial. It does not determine truthfulness, copyright, ownership, legal certification, content safety or media quality. BytePlus has no doctor report."
 metadata:
   requires:
     bins: ["arkcli"]
@@ -35,6 +35,9 @@ remote metrics query uses the shared authentication gate.
   create a VMP workspace and bind ModelArk telemetry after explicit approval.
 - `--auto-bind` cannot enable VMP, accept service terms, create the
   service-linked role, repair IAM, activate a model, or pay a bill.
+- `doctor +verify-origin` is an explicit workflow exception: it creates remote
+  asynchronous verification tasks and can be billable. One confirmation covers
+  every URL in the current batch.
 
 ## When To Trigger
 
@@ -47,6 +50,8 @@ remote metrics query uses the shared authentication gate.
   returning errors, or under quota pressure.
 - A named ModelArk metric, one metric value, time series, or explicit `ark_*`
   PromQL query is needed from BytePlus VMP.
+- The user supplies 1-20 image or video URLs and asks whether they contain
+  ModelArk, Seedance, or Seedream generation-origin features.
 
 ## When NOT To Trigger
 
@@ -63,6 +68,8 @@ remote metrics query uses the shared authentication gate.
   no doctor product command covers the task.
 - Any request for `doctor report`: explain that BytePlus does not expose this
   command. Do not substitute another product's workflow or URL.
+- Requests to judge whether media content is true, misleading, copyrighted,
+  legally owned, safe, compliant, high quality, or playable.
 
 ## Command family
 
@@ -72,6 +79,7 @@ arkcli doctor account
 arkcli doctor error <code>
 arkcli doctor infer-endpoint <endpoint-id> [--window 24h] [--auto-bind]
 arkcli doctor model <model-name> [--window 24h] [--auto-bind]
+arkcli doctor +verify-origin <media-url> [media-url...]
 
 arkcli doctor metrics list
 arkcli doctor metrics describe <query-id>
@@ -91,6 +99,31 @@ the result shape for a named or raw query; it does not change catalog output.
 Doctor diagnostics are read-only and do not register `--dry-run`; execute the
 requested diagnostic directly. `--auto-bind` remains a separately confirmed
 mutation when only telemetry workspace binding is missing.
+
+`doctor +verify-origin` is different: it supports a local `--dry-run` workflow
+preview, and a new batch requires one aggregate price confirmation before real
+execution.
+
+## Origin-verification workflow
+
+For media generation-origin verification, first read
+[`references/verify-origin.md`](references/verify-origin.md).
+
+1. Collect all URLs and reject more than 20.
+2. Run one CLI command for the entire batch without `--yes`.
+3. Show the aggregate USD price disclosure completely.
+4. Wait for explicit confirmation after disclosure.
+5. Rerun the same batch once with one `--yes`; that confirmation covers every
+   URL in the batch.
+6. Do not spawn one command per URL, write a shell loop, call raw Actions, or
+   implement polling in the Agent.
+7. The CLI owns Create/Get pacing and five-second polling.
+8. Make the complete terminal stdout JSON the entire final response. Add no
+   summary, translation, interpretation, Markdown fence, prefix, or suffix.
+
+Do not interpret `IsOfficial=True`, `False`, or `Null`. This API exposes
+generation-origin technical features, not legal certification or a content
+truthfulness decision.
 
 ## Core workflow: from user message to command
 
@@ -283,6 +316,8 @@ Official BytePlus references:
   `doctor infer-endpoint`.
 - Obtain explicit approval before adding `--auto-bind`.
 - Never route to or emulate `doctor report` on BytePlus.
+- For origin verification, obtain exactly one confirmation for the whole batch,
+  never one confirmation per media URL.
 
 ## Output handoff
 
@@ -298,6 +333,10 @@ Return, in order:
 Do not repeat the full JSON unless the user asks. Never replace an unknown or
 unavailable result with a successful result.
 
+Exception: for `doctor +verify-origin`, always relay the complete stdout JSON
+as the entire final response because the upstream legal wording and every
+response field must remain intact.
+
 ## References
 
 - [`references/scope-cli.md`](references/scope-cli.md)
@@ -306,6 +345,7 @@ unavailable result with a successful result.
 - [`references/scope-infer-endpoint.md`](references/scope-infer-endpoint.md)
 - [`references/scope-model.md`](references/scope-model.md)
 - [`references/scope-metrics.md`](references/scope-metrics.md)
+- [`references/verify-origin.md`](references/verify-origin.md)
 - [`references/evals.md`](references/evals.md)
 - [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - [`../arkcli-auth/SKILL.md`](../arkcli-auth/SKILL.md)

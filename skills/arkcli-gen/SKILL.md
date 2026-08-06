@@ -62,7 +62,7 @@ User intent: "Generate X"
   │
   ▼ Step 2 (mandatory, except EPs) Check available parameters for $MODEL  ──► arkcli models get $MODEL --transform supported_params
   │     Model name + has sp → **only** use the listed parameters, with values within min/max/enum
-  │     Model name + empty sp (not configured, such as 2.0/1.5-pro) → +gen automatically applies modality fallback defaults (video 720p/5s, image 2048)
+  │     Model name + empty sp (not configured or currently unparseable) → +gen automatically applies modality fallback defaults (video 720p/5s, image 2048)
   │     EP (ep-xxx)            → Skip; do not force-fill parameters (unknown underlying capabilities); let the server decide.
   │
   ▼ Step 3 Generate based on available parameters  ──► arkcli +gen --model $MODEL [parameters allowed by Step 2] "prompt"
@@ -95,7 +95,7 @@ arkcli models get "$MODEL" --transform supported_params
 - **`$MODEL` is a model name**: Get the `supported_params` list for this model (each item contains `name / type / support / min / max / enum / required`).
   - > **MUST: Step 3 can only use parameters where `support=true` here, and values must be within the `min/max/enum` range.** Parameters not in the list (or with `support=false`) will be rejected by `+gen`.
   - **You can directly use the ID returned by Step 1 `resources list`** (dot/display forms such as `dreamina-seedance-2-0` are all fine): `models get` automatically normalizes by DisplayName to the canonical hyphenated name. No manual conversion is needed. Only in very rare cases where `not found` is still reported should you use `arkcli models search <family name>` to check the name.
-  - If the model is found but `supported_params` is empty / `null` (many models are not configured, such as `dreamina-seedance-2-0`) → **do not manually add parameters**: `+gen` automatically uses built-in modality fallback defaults (video: `resolution=720p` / `duration=5` / `ratio=adaptive`; image: `size=2048x2048`) to fill parameters you did not specify. Go directly to Step 3.
+  - If the model is found but `supported_params` is empty / `null`, that version has no configured catalog or its upstream catalog is currently unparseable. Preserve any `warn: model supported_params enrichment failed: ...` line from stderr for troubleshooting. **Do not guess parameters manually**: `+gen` automatically uses built-in modality fallback defaults (video: `resolution=720p` / `duration=5` / `ratio=adaptive`; image: `size=2048x2048`) to fill parameters you did not specify. Go directly to Step 3.
 - **`$MODEL` is an EP (`ep-xxx`)**: Skip this step. It is normal that supported_params cannot be found for an EP. Also, `+gen` **does not** apply fallback defaults to EPs (the model behind the EP may support higher capabilities, and forcing defaults may downgrade it incorrectly). Degrade open directly and let the server decide.
   - Only the `supported_params` lookup is skipped. A real `+gen` call still resolves image/video through `Endpoint -> ModelReference -> FoundationModel metadata`.
   - Provide `--modality` only when authoritative metadata is unavailable or conflicting.

@@ -119,9 +119,11 @@ Unlike the old fuzzy API's default of nine entries, this command returns **all m
 
 - ArkModels is a Console BFF API and requires SSO credentials.
 - Without SSO (AK/SK only) → enrichment is silently skipped, models are still returned, and filtering automatically becomes a no-op.
-- Cache paths are separated by `(profile, region, project)` → data does not mix across accounts/projects.
-- There is no TTL concept: **every search call triggers an asynchronous background refresh**, so the next call always uses fresh data.
-- A startup cache hit returns immediately; a detached subprocess performs the refresh (`arkcli models _refresh-cache`).
+- Cache paths are separated by `(identity/account, profile, region, project)`. Persistent caching is disabled when no authoritative identity is available, preventing cross-account reuse.
+- The default TTL is 5 minutes and can be adjusted with `ARKCLI_MODEL_CACHE_TTL`. Reads within the TTL use local cache only.
+- After TTL expiry, stale-while-revalidate serves the current snapshot and starts a detached refresh (`arkcli models _refresh-cache`). Cold fills and refreshes are single-flighted across local processes for the same scope.
+- `auth logout` and a fresh account switch remove all model caches for the current product.
+- Every ArkModels Action passes through an account-scoped transport limiter with a 250ms minimum interval (about 4 QPS, leaving headroom below the backend's 5 QPS limit).
 
 ### Keyword matching scope
 

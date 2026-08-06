@@ -28,7 +28,7 @@ Before execution, read the corresponding reference based on the user's intention
 | No tools specified | Let the CLI inject the complete default toolset; an explicit `--tool` replaces the full default array |
 | No environment specified | When creating a Session, select the latest environment in the current project; ask for one only if none is available |
 | Agent created | Read it back with `agent agent get <agent-id> --format json` and report the final Model, System, Tools, Skills, MCP servers, and extension fields |
-| The user expects a reply | Use `+new session ... --message` or `events send ... --wait` for short work; use `--poll` or cursor-based event polling for large or long-running work |
+| The user expects a reply | Use `+new session ... --message` or `events send ... --stream` for short work; use `--poll` or cursor-based event polling for large or long-running work |
 
 ## Select Path
 
@@ -47,7 +47,7 @@ Before execution, read the corresponding reference based on the user's intention
 | Mount a TOS Directory When Creating a Session | After the user provides the path, use `arkcli agent session create --tos-path tos://<bucket>/<prefix>/`; never guess the bucket or prefix | [`references/session-files.md`](references/session-files.md#session-tos-resource) |
 | Continue an Existing Session | `arkcli +new session` | [`references/events-chat.md`](references/events-chat.md) |
 | Create a New Session and Chat | `arkcli +new session <agent-id> --environment-id <env-id>` | [`references/events-chat.md`](references/events-chat.md) |
-| Send Messages to or Stream Replies from a Session | Plain `events send` is write-only; add `--wait` for a complete reply, use `--poll` for long work, or follow with `+tail`. Streaming requests Agent message/thinking deltas by default; use `--no-event-deltas` for complete events only | [`references/events-chat.md`](references/events-chat.md) |
+| Send Messages to or Stream Replies from a Session | Plain `events send` is write-only; add `--stream` for SSE replies (`--wait` remains a compatibility alias), use `--poll` for long work, or follow with `+tail`. Streaming requests Agent message/thinking deltas by default; use `--no-event-deltas` for complete events only | [`references/events-chat.md`](references/events-chat.md) |
 | Diagnose or Export a Session | `arkcli +debug <session-id>` or `arkcli +export <session-id>` | [`references/debug-export.md`](references/debug-export.md) |
 | Upload a File to an Existing Session | `arkcli agent session resources add <session-id> --path <file>` | [`references/session-files.md`](references/session-files.md) |
 | Query or Upload Files via the Files API | `arkcli agent file upload/list/get/wait/delete` | [`references/session-files.md`](references/session-files.md) |
@@ -87,7 +87,7 @@ Before execution, read the corresponding reference based on the user's intention
 - After a successful write, capture the ID from structured output and use that literal ID in the next command.
 - If a write times out, first use a separate read command such as `session list/get`, `events list`, or `+debug` to determine whether it succeeded. Do not blindly retry a request whose result is unknown.
 - Retry network interruptions, 429 responses, and 5xx responses only, with bounded exponential backoff. Do not retry validation, authentication, entitlement, permission, or explicit business errors.
-- `events send --wait` automatically falls back from streaming to cursor-based event-list polling after its stream timeout. If both stages time out, continue from the reported cursor instead of sending the user's message again.
+- `events send --stream` automatically falls back from SSE to cursor-based event-list polling after its stream timeout. `--wait` remains a compatibility alias. If both stages time out, continue from the reported cursor instead of sending the user's message again.
 
 ## Command Quick Reference
 

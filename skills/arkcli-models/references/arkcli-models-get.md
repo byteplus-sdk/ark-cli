@@ -28,6 +28,11 @@ arkcli models get --id dola-seed-2-1-turbo-260628 --version 260628
 
 Model details in JSON format, aggregated from multiple underlying APIs. Includes model name, version, capabilities, pricing, rate limits, and other information.
 
+`supported_params` is enriched for the exact model version in the detail result. Primary versions may reuse a fresh local ArkModels metadata cache; when that cache is unavailable, for explicit non-primary versions, or with `--no-cache`, the CLI uses exact-version `ListModelMetaDatas` instead. `models get` does not add ArkModels network calls for this enrichment, avoiding its low-QPS limit. `--no-cache` still bypasses both CardView and ArkModels metadata caches.
+
+- Missing field or empty array: no usable parameter catalog is currently available for that version, so `--transform supported_params` may print `null`.
+- Present but malformed upstream JSON: the CLI prints `warn: model supported_params enrichment failed: ...` with model/version context to stderr while stdout still returns the remaining model detail.
+
 ## Common errors
 
 | Error | Cause | Handling |
