@@ -116,6 +116,8 @@ Default installation:
 
 - detects supported agents from local filesystem paths;
 - deduplicates agents that share one Skills directory;
+- prefers an agent-specific detection home, such as Codex or Pi, when choosing
+  the representative name for a shared target;
 - installs each unique target path once;
 - cleans legacy private Ark CLI copies that would otherwise create duplicate
   Skill names;
@@ -167,8 +169,9 @@ connection.
 
 Automatic post-install always uses the same authoritative-catalog transaction
 and never enables `--purge-prefix`. It is non-blocking for package installation.
-A filesystem or connection failure does not imply a BytePlus authentication
-failure.
+On success, its compact summary reports the unique target count and the
+representative agent names without per-target path progress. A filesystem or
+connection failure does not imply a BytePlus authentication failure.
 
 ## Guard Checklist
 

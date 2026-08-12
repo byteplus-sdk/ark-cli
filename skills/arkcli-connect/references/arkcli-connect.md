@@ -34,12 +34,14 @@ The default workflow:
 1. detects supported agents from local directories;
 2. maps each detected agent to its Skills directory;
 3. deduplicates shared directory paths;
-4. reads the Ark CLI ownership manifest and stages the complete current catalog;
-5. removes recognized routing conflicts unless `--keep-conflicting` is set;
-6. atomically overwrites every current-catalog name and retires names that left
+4. prefers an agent-specific detection home, such as Codex or Pi, when choosing
+   the representative name for a shared target;
+5. reads the Ark CLI ownership manifest and stages the complete current catalog;
+6. removes recognized routing conflicts unless `--keep-conflicting` is set;
+7. atomically overwrites every current-catalog name and retires names that left
    the catalog;
-7. cleans duplicate legacy private copies where required;
-8. reports the result for each unique target path.
+8. cleans duplicate legacy private copies where required;
+9. reports the result for each unique target path.
 
 Detection and installation paths may differ for agents that consume a shared
 Skills directory. Always use `arkcli +connect list` instead of assuming a
@@ -137,7 +139,9 @@ The package post-install script:
 2. validates the platform binary;
 3. attempts to open an interactive controlling terminal;
 4. runs the binary with `+connect` when that terminal is available;
-5. treats connection failure as non-blocking for package installation.
+5. reports the unique target count and representative agent names in the
+   compact success line without per-target path progress;
+6. treats connection failure as non-blocking for package installation.
 
 Piped and other non-interactive installations skip automatically. The
 post-install path uses the same authoritative-catalog transaction and never

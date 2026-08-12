@@ -63,6 +63,7 @@ Plans have two forms: **personal edition** (`personal`) and **enterprise / team 
 - Place an order for a plan (personal / team) → `plans buy`.
 - Renew an existing plan → `plans renew`.
 - View the models supported by a plan → `plans model-list`.
+- Switch the ark-code-latest route target (Auto smart scheduling or a concrete shadow model) → `plans model-apply`.
 - List / filter enterprise seats → `plans team seat-list`.
 - Bind an enterprise seat to a sub-user → `plans team seat-assign`.
 - Rotate API keys for explicit Coding Plan Team SeatIDs → `plans team rotate-apikey`.
@@ -75,6 +76,7 @@ Plans have two forms: **personal edition** (`personal`) and **enterprise / team 
   - "Which model do I use most / in-plan versus out-of-plan ratio?" → `arkcli usage plan-details`.
   - "Team-seat usage" → `arkcli usage seats --product coding-plan-team --with-usage`.
 - User asks "Which models does Coding Plan support?": `arkcli plans model-list --plan <plan>`.
+- User wants to "switch the ark-code-latest underlying model / use Auto smart scheduling / pin a specific model": `arkcli plans model-apply --plan <plan> --model <model-id|output-name|auto>` (**write operation**, synced with the console; confirm valid targets with `plans model-list` first).
 - User wants to "buy / renew a plan": first read [references/arkcli-plans-buy.md](references/arkcli-plans-buy.md) / [renew.md](references/arkcli-plans-renew.md). **Explicitly require `--plan`, `--type`, and `--duration`; team plans also require `--quantity`**. Do not choose for the user.
 - User wants to "**query seats / inspect team-seat bindings / see who is bound to which seat / list seats / see activated seats / team-seat admin view**" → `plans team seat-list --plan <coding-plan-team>` (**the default entry point for seat management**; the management view lists basic information + bindings, **without usage numbers**. To see each seat's token usage / plan percentage → `arkcli usage seats --with-usage`).
 - User wants to "assign a seat to an employee / allocate employee seats" → `plans team seat-assign`; first prepare a `seat-id=user-id` pairing list.
@@ -85,7 +87,7 @@ Plans have two forms: **personal edition** (`personal`) and **enterprise / team 
 
 1. First confirm authentication status: `arkcli auth status`; if missing, use `../arkcli-auth/`.
 2. Execute read operations (`get` / `model-list` / `seat-list`) directly; consider the current identity only when the user asks about "mine".
-3. For **write operations (`buy` / `renew` / `seat-assign` / `rotate-apikey`)**, always:
+3. For **write operations (`buy` / `renew` / `seat-assign` / `rotate-apikey` / `model-apply`)**, always:
    - Read the corresponding reference first.
    - Confirm key fields with the user (plan / type / duration / SeatIDs / UserID pairings).
 4. Partial failure (per-item Success/Failed arrays) is a valid response. When the exit code is nonzero, **do not** immediately treat the entire operation as failed; first inspect `success_count` / `failed_count` in stdout.
@@ -96,6 +98,7 @@ Plans have two forms: **personal edition** (`personal`) and **enterprise / team 
 |---|---|---|
 | `plans buy` | Compliance step; **payment happens on the BytePlus web console**, not in CLI | First run without `--yes` through the review gate → show `total_amount_usd` + `subscribe_url` to the user → direct them to `subscribe_url` in the browser (where BytePlus web handles agreement UI). `--yes` also returns `subscribe_url` and does **not** charge the account. See [agreement gate process](#-agreement-gate-mandatory-process-for-plans-buy--plans-renew) |
 | `plans renew` | Same as buy: payment happens on the BytePlus web console | Same review gate as buy; team edition requires `--seat-ids`. `--yes` also returns `subscribe_url` without renewing anything in-CLI |
+| `plans model-apply` | Changes the plan's request routing (effective immediately, synced with the console) | `--model` is required when non-interactive; confirm valid targets with `plans model-list` first; team plans error when the account holds no active seat |
 | `plans team seat-assign` | Modifies seat bindings | Explicit `--bind seat-id=user-id`; automatically calls IAM to resolve UserName |
 | `plans team rotate-apikey` | **Credential rotation**; old keys are invalidated immediately | Explicit `--seat-ids`; confirm all affected applications are ready for replacement keys before adding `--yes`; never paste returned plaintext keys into chat |
 
@@ -107,6 +110,7 @@ Plans have two forms: **personal edition** (`personal`) and **enterprise / team 
 | [`plans buy`](references/arkcli-plans-buy.md) | Review + web redirect | Show price + `subscribe_url` so the user can complete the purchase on the BytePlus console (web handles agreement UI) |
 | [`plans renew`](references/arkcli-plans-renew.md) | Compliance + web redirect | Same as buy: `subscribe_url` points to the BytePlus console renewal page |
 | [`plans model-list`](references/arkcli-plans-model-list.md) | Read | List models supported by a plan + the currently selected ark-latest-model |
+| [`plans model-apply`](references/arkcli-plans-model-apply.md) | Write | Set the ark-code-latest route target (auto or a concrete shadow model) |
 | [`plans team seat-list`](references/arkcli-plans-team-seat-list.md) | Read | List enterprise seats + multidimensional filtering |
 | [`plans team seat-assign`](references/arkcli-plans-team-seat-assign.md) | Write | Batch-bind enterprise seats to sub-users |
 | [`plans team rotate-apikey`](references/arkcli-plans-team-rotate-apikey.md) | Destructive write | Rotate API keys for explicitly selected Coding Plan Team seats |

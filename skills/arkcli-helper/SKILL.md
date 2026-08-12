@@ -67,6 +67,12 @@ Trae is not accepted because its current integration cannot write model
 provider configuration. Always use `arkcli helper list` as the runtime source
 of truth.
 
+A Coding Plan model may be the routing model `ark-code-latest`. Switching its
+route target (Auto smart scheduling or a pinned underlying model) is outside
+this skill — use `arkcli plans model-apply --plan <plan> --model <target>`
+(see [`../arkcli-plans/`](../arkcli-plans/SKILL.md)); it writes the control
+plane and stays in sync with the console.
+
 ## Command Map
 
 | Command | Mode | Purpose |
