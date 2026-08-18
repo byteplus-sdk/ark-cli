@@ -143,6 +143,7 @@ arkcli +gen --model "$MODEL" --input @ref.jpg "<prompt>"
 | "Open it directly after generation / open it for me to see / pop it up when it is ready" | `arkcli +gen --open` (force opening with the system default application; it is already opened automatically by default in an interactive terminal) |
 | "Do not open automatically / no pop-up / I am running it in a script, do not open it" | `arkcli +gen --no-open` (force not opening) |
 | "Preview / do not actually submit / only view parameters / dry run / trial run / take a look first" | Run `arkcli +gen ... --dry-run --format json`; inspect `steps`, `unresolved`, and `fidelity`, and do not present a partial plan as server validation |
+| "Do not download / URL only / do not save locally / disable automatic download" | Add `--save-to=""` explicitly; retain it together with `--dry-run` so the preview verifies the no-download intent for a future real execution |
 | "Force execution / skip validation / I know it is unsupported but want to try it" | `arkcli +gen --force` |
 | "Coherent multiple images / in order / consistent style / 4-panel comic / sequential images" | `arkcli +gen --sequential` |
 | "My previous tasks / generation history / task list / task status" | `arkcli gen list` (list all asynchronous generation tasks) |
