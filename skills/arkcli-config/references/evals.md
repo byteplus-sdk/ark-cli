@@ -116,3 +116,17 @@ Verify that:
 - deprecated profile-management commands are not recommended;
 - `profile create --help` lists only BytePlus-supported profile types;
 - reset preview is structured and does not remove files.
+
+## 9. Persisted update mode
+
+User request:
+
+> Enable guarded automatic updates for BytePlus Ark CLI.
+
+Expected behavior:
+
+- Explain that this is a persisted local configuration write.
+- Run `arkcli config set update.mode automatic` after the explicit request.
+- Explain that a normal first npm install initializes `automatic` only when unset; use `notify` to stop silent installation while keeping notices, or `disabled` to stop all implicit behavior.
+- Explain that explicit `arkcli update` and `arkcli update --check` work in every mode.
+- Never edit `$HOME/.arkcli-bp/config.yaml` directly or create a scheduled task.

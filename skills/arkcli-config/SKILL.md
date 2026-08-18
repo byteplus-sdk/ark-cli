@@ -1,7 +1,7 @@
 ---
 name: arkcli-config
 version: 0.2.0
-description: "Diagnose BytePlus Ark CLI configuration precedence, effective profile, Region, project, base URL, API key, environment, UI language, and local reset behavior. Use when a command reaches the wrong account or endpoint, an override is unclear, a legacy config command needs migration, or the user explicitly wants to inspect or reset local configuration."
+description: "Diagnose BytePlus Ark CLI configuration precedence, effective profile, Region, project, base URL, API key, environment, UI language, persisted update mode, and local reset behavior. Use for unclear overrides, update opt-in/out, legacy config migration, inspection, or reset."
 metadata:
   requires:
     bins: ["arkcli"]
@@ -40,6 +40,7 @@ API key selection.
   `ARK_PROJECT_NAME` values still have an effect.
 - The user needs `arkcli config lang`, `arkcli config reset`, or a migration
   from a deprecated `arkcli config` profile command.
+- The user explicitly wants to enable, disable, or restore automatic-update behavior.
 
 ## When NOT To Trigger
 
@@ -111,11 +112,16 @@ URL must never reuse a profile API key.
 | `arkcli config lang get` | Show the persisted effective UI locale | Read-only |
 | `arkcli config lang set en_us` | Persist the only locale supported by BytePlus | Writes `config.yaml` |
 | `arkcli config lang unset` | Remove the persisted locale and use the BytePlus build default | Writes `config.yaml` |
+| `arkcli config set update.mode notify` | Stop silent installation while retaining implicit checks and notices | Writes `config.yaml` |
+| `arkcli config set update.mode automatic` | Guarded updates; initialized by default after npm install, with automatic apply currently open only on Windows | Writes `config.yaml` |
+| `arkcli config set update.mode disabled` | Disable implicit update behavior, while preserving manual update commands | Writes `config.yaml` |
 | `arkcli config reset` | Remove both local configuration files after an interactive confirmation | Destructive |
 
 `arkcli config reset` does not remove BytePlus SSO tokens, the identity store,
 or cached credentials. Use `arkcli auth logout` when the user explicitly wants
 to remove authentication state.
+
+A normal npm postinstall initializes `automatic` only when `update.mode` has never been set and prints `arkcli config set update.mode notify` as the opt-out. Upgrade/reinstall preserves existing `notify/disabled`. If npm blocks postinstall, only a stable npm-owned CLI initializes after its first successful ordinary interactive command and prints the same opt-out; that command never updates immediately. Other skipped cases remain non-automatic.
 
 BytePlus rejects `zh_cn` even though the shared command parser recognizes that
 locale for other products.
@@ -145,6 +151,7 @@ Do not generate new automation with deprecated commands.
   `show/list`, restate the exact mutation, and obtain confirmation instead.
 - Keep BytePlus on `ap-southeast-1`; do not retry through another product.
 - Return to the user's original business task after configuration is fixed.
+- Use only the allowlisted `update.mode` key; never treat `config set` as a generic YAML-path writer. `disabled` does not disable explicit `arkcli update` or `arkcli update --check`.
 
 ## References
 

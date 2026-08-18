@@ -1,8 +1,8 @@
 # Profile command migration and configuration scope
 
 Profile operations belong to `arkcli profile`. The `arkcli config` group now
-owns only global UI language, full configuration reset, and compatibility for
-legacy scripts.
+owns global UI language, the allowlisted `update.mode` policy, full
+configuration reset, and compatibility for legacy scripts.
 
 ## Read-only inspection
 
@@ -50,6 +50,9 @@ profile workflow.
 arkcli config lang get
 arkcli config lang set en_us
 arkcli config lang unset
+arkcli config set update.mode notify
+arkcli config set update.mode automatic
+arkcli config set update.mode disabled
 arkcli config reset
 ```
 

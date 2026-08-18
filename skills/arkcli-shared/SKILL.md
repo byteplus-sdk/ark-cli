@@ -1,6 +1,6 @@
 ---
 name: arkcli-shared
-version: 0.2.0
+version: 0.2.2
 description: "Shared Ark CLI execution protocol for BytePlus: first-use setup, authentication gates, command routing, structured output, safety, and confirmation handling. Read this Skill before using any other arkcli-* Skill."
 metadata:
   requires:
@@ -52,6 +52,9 @@ Load detailed shared guidance only when needed:
 - The control-plane environment is `prod` by default. Use `--env stg` only
   when the user explicitly requests the BytePlus staging environment.
 - BytePlus supports the `en_us` UI locale only.
+- Route version checks, update notices, and explicit upgrades to
+  [`arkcli-update`](../arkcli-update/SKILL.md). An available release never
+  authorizes an automatic update.
 
 ## Command selection order
 
@@ -67,6 +70,35 @@ Choose commands from the user's goal, not from an API action name.
 Do not require an Endpoint for a one-off model trial. Use a task workflow such
 as chat or generation when that capability is available. Use Endpoint commands
 for stable production integration.
+
+## AI Skill invocation protocol
+
+Every `arkcli` command executed by an AI Agent through an `arkcli-*` Skill must
+use the complete single-command prefix below. It records the caller and owning
+Skill while freezing the installed CLI version for the whole Skill workflow:
+no implicit registry refresh, update notice, or automatic apply scheduling may
+run between commands.
+
+```bash
+ARKCLI_NO_UPDATE_NOTIFIER=1 \
+ARKCLI_CALLER_TYPE=ai_agent \
+ARKCLI_CALLER_NAME=<agent-id> \
+ARKCLI_SKILL_NAME=<current-arkcli-skill> \
+arkcli <command> ...
+```
+
+- Use a stable Agent ID such as `codex`, `claude-code`, `opencode`, `openclaw`,
+  `trae`, or `cursor`; use `unknown_agent` only when it cannot be determined.
+- Set `ARKCLI_SKILL_NAME` to the actual owning capability, never
+  `arkcli-shared`.
+- Apply the full prefix to every `arkcli` command in a multi-command workflow,
+  not only the first command.
+- Despite its compatibility name, `ARKCLI_NO_UPDATE_NOTIFIER=1` suppresses all
+  implicit update activity: cache checks/refreshes, notices, and automatic
+  apply scheduling. It does not block an explicit user-requested
+  `arkcli update` or `arkcli update --check`.
+- Keep the variables scoped to one command; do not export them into unrelated
+  shell work.
 
 ## Authentication gate
 
