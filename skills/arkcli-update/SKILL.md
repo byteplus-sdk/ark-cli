@@ -1,6 +1,6 @@
 ---
 name: arkcli-update
-version: 1.0.0
+version: 1.0.1
 description: "Check or upgrade BytePlus Ark CLI and manage the persisted notify, automatic, and disabled update modes. Trigger for version checks, live refreshes, explicit upgrades, automatic-update opt-in/out, npm/Node/NVM prefix mismatches, or update-helper results."
 metadata:
   requires:
@@ -55,7 +55,8 @@ Explicit `arkcli update` and `arkcli update --check` remain available in every m
 Change policy only when the user explicitly requests it:
 
 ```bash
-# Default after a normal first npm install: guarded silent automatic updates
+# Future explicit consent for this exact install after its product/platform gate opens.
+# The current release returns automatic unavailable without writing config.
 arkcli config set update.mode automatic
 
 # Stop silent installation while retaining checks and update notices
@@ -65,19 +66,26 @@ arkcli config set update.mode notify
 arkcli config set update.mode disabled
 ```
 
-A normal npm postinstall initializes `automatic` only when `update.mode` has never been set and prints the opt-out command. Upgrade/reinstall must preserve an existing `notify` or `disabled`. If npm blocks postinstall, a stable npm-owned CLI initializes only after the first successful ordinary interactive command and prints the same opt-out; that command never updates immediately. CI, direct binaries, dev/candidate builds, non-TTY sessions, Preview, `config`/`update`, and internal commands remain `notify`. An Agent must never use the package default as permission to overwrite a persisted user choice.
+An npm postinstall, first run, or environment variable never infers automatic-update consent. A missing `update.mode` always resolves to the backwards-compatible `notify` default. The fail-closed Windows, macOS, and Linux transactions are implemented, but all six product/platform production gates are currently `false`; `config set update.mode automatic` therefore returns unavailable before reading or writing config or consent state. An Agent must never treat implementation readiness, a discovered release, or npm install shape as automatic-update authority.
 
-In `automatic` mode, a normal interactive command first completes with the version that started it. The CLI then accepts only a cached official stable/latest target owned by the same npm global root. After the business process exits, the npm launcher validates a one-use nonce and strict handoff, then synchronously runs an external helper. The helper rereads `update.mode`, installs, and verifies both the package and executable; the next command uses the new version.
+After a product/platform gate passes real cross-version acceptance and is opened, `automatic` works as follows:
 
-Only Windows currently enters automatic apply after its package/launcher rollback transaction passes every gate. macOS and Linux fail closed and retain explicit `arkcli update` until their own native recovery transactions are implemented and verified. Automatic apply is also refused in CI, non-TTY sessions, Client Preview, internal maintenance, `config`/`update` commands, candidate/integration builds, direct non-npm binaries, or npm-prefix mismatches. An apply failure preserves the completed business command's success and backs off the same target for 24 hours.
+1. A normal interactive command completes with the version that started it.
+2. The CLI requires the exact stable product/package/registry/tag, a forward patch, dual-clock observations, the 10/50/100 cohort, explicit consent, and a one-use rollout token.
+3. A detached helper waits for the exact process to exit, downloads the reservation-pinned SRI/URL, and writes inert bytes into an isolated stage without executing npm, Node, lifecycle scripts, or the candidate.
+4. Windows uses its persistent bootstrap, execution lease, journal, and FileId-bound no-replace renames; macOS uses `RENAME_SWAP`; Linux uses `RENAME_EXCHANGE`. Missing atomic-cutover support or any evidence drift is a safe miss.
+5. The next command uses the new version only after post-cutover validation and consent rotation. Failure preserves the completed business command result and the prior installation or an exact rollback.
+
+No product/platform currently enters production automatic apply. Even after a gate opens, CI, non-TTY sessions, Client Preview, AI Skill workflows, internal maintenance, `config`/`update` commands, candidate/integration builds, direct non-npm binaries, container/environment uncertainty, and npm-prefix mismatches remain safe misses. A failed target backs off for 24 hours.
 
 ## Failure and platform routing
 
 - Missing npm: relay the manual command; do not install Node or npm automatically.
 - npm prefix / Node / NVM mismatch: stop and ask the user to activate the Node environment that installed this Ark CLI. Never update a different PATH prefix.
 - Non-npm running binary: explain that the current copy is unaffected. A non-interactive retry needs explicit authorization before adding `--yes`; verified npm-package installation still does not mean that copy changed.
-- Explicit `arkcli update` on Windows: the immediate result is only scheduled. An external helper applies the update after the parent exits and writes `update-apply.log`. Report completion only after a new `arkcli --version` shows the target or the log records `installed and verified`. The npm launcher synchronously waits for automatic apply on Windows; do not extend that safety claim to macOS or Linux while their automatic gate is closed.
+- Explicit `arkcli update` on Windows: the immediate result is only scheduled. An external helper applies the update after the parent exits and writes `update-apply.log`. Report completion only after a new `arkcli --version` shows the target or the log records `installed and verified`.
 - Windows apply uses a fail-closed rollback transaction. It preserves the previous package and npm-generated launchers, restores them after any npm/package/version/executable/launcher verification failure, and recovers an interrupted prior transaction before another mutation. Never interpret a failed apply as partial success, and never delete an `.arkcli-update-*` recovery directory during diagnosis.
+- Explicit `arkcli update` on macOS/Linux retains the existing manual npm upgrade semantics. Do not claim that the still-closed automatic atomic-cutover path is already used by the explicit command.
 
 ## Prohibited behavior
 

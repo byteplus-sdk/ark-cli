@@ -127,6 +127,8 @@ Expected behavior:
 
 - Explain that this is a persisted local configuration write.
 - Run `arkcli config set update.mode automatic` after the explicit request.
-- Explain that a normal first npm install initializes `automatic` only when unset; use `notify` to stop silent installation while keeping notices, or `disabled` to stop all implicit behavior.
+- Explain that the default is `notify` and npm postinstall/first run never infer automatic consent.
+- Expect the current release to return automatic unavailable before writing config or consent because all production gates are closed; do not report the mode as enabled.
+- Explain that `notify` keeps checks/notices and `disabled` stops all implicit behavior.
 - Explain that explicit `arkcli update` and `arkcli update --check` work in every mode.
 - Never edit `$HOME/.arkcli-bp/config.yaml` directly or create a scheduled task.

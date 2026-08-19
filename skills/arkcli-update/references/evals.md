@@ -43,11 +43,11 @@ When the CLI reports a scheduled background update and a log path:
 
 Prompt: “Automatically update BytePlus Ark CLI when it is safe.”
 
-- Explain that a normal first npm install initializes `automatic` only when no policy exists; this command idempotently confirms the persisted choice.
-- If npm blocked postinstall, explain that the first successful stable npm-owned interactive command only initializes and informs; it never updates on that same invocation.
+- Explain that the default policy is `notify`; postinstall, first run, and environment variables never infer automatic-update consent.
 - Run `arkcli config set update.mode automatic`.
-- Explain that automatic apply is currently open only on Windows; macOS/Linux fail closed and still support explicit `arkcli update`.
-- Explain the interactive-success, official-stable npm, same-prefix, and post-exit handoff gates.
+- All production gates are currently closed, so expect an automatic-unavailable error and confirm that config and consent were not written; never claim enablement succeeded.
+- Explain that the fail-closed Windows, macOS, and Linux transactions are implemented, but a real foundation-stable-to-next-patch cross-version acceptance must pass before a product/platform gate opens.
+- Explain that a future opened gate still requires explicit opt-in, successful interactive execution, the exact official stable tuple, dual-clock/cohort rollout, SRI, consent, and the platform atomic transaction. CI, non-TTY sessions, AI Skill workflows, direct binaries, and candidate/integration builds remain safe misses.
 - Do not create a scheduled task.
 
 ## Disable implicit updates

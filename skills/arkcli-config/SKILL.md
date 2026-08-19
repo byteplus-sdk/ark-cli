@@ -1,6 +1,6 @@
 ---
 name: arkcli-config
-version: 0.2.0
+version: 0.2.1
 description: "Diagnose BytePlus Ark CLI configuration precedence, effective profile, Region, project, base URL, API key, environment, UI language, persisted update mode, and local reset behavior. Use for unclear overrides, update opt-in/out, legacy config migration, inspection, or reset."
 metadata:
   requires:
@@ -113,7 +113,7 @@ URL must never reuse a profile API key.
 | `arkcli config lang set en_us` | Persist the only locale supported by BytePlus | Writes `config.yaml` |
 | `arkcli config lang unset` | Remove the persisted locale and use the BytePlus build default | Writes `config.yaml` |
 | `arkcli config set update.mode notify` | Stop silent installation while retaining implicit checks and notices | Writes `config.yaml` |
-| `arkcli config set update.mode automatic` | Guarded updates; initialized by default after npm install, with automatic apply currently open only on Windows | Writes `config.yaml` |
+| `arkcli config set update.mode automatic` | Future explicit consent for this exact install after its gate opens; all production gates are currently closed, so the command returns unavailable without writing config | Currently unavailable |
 | `arkcli config set update.mode disabled` | Disable implicit update behavior, while preserving manual update commands | Writes `config.yaml` |
 | `arkcli config reset` | Remove both local configuration files after an interactive confirmation | Destructive |
 
@@ -121,7 +121,7 @@ URL must never reuse a profile API key.
 or cached credentials. Use `arkcli auth logout` when the user explicitly wants
 to remove authentication state.
 
-A normal npm postinstall initializes `automatic` only when `update.mode` has never been set and prints `arkcli config set update.mode notify` as the opt-out. Upgrade/reinstall preserves existing `notify/disabled`. If npm blocks postinstall, only a stable npm-owned CLI initializes after its first successful ordinary interactive command and prints the same opt-out; that command never updates immediately. Other skipped cases remain non-automatic.
+An npm postinstall, first run, or environment variable never infers automatic-update consent. A missing `update.mode` always resolves to the backwards-compatible `notify` default. The fail-closed Windows, macOS, and Linux transactions are implemented, but all production gates are currently `false`, so the `automatic` command rejects before any config or consent write. Explicit `arkcli update` and `arkcli update --check` remain available.
 
 BytePlus rejects `zh_cn` even though the shared command parser recognizes that
 locale for other products.
