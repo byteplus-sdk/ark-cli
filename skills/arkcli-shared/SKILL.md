@@ -1,7 +1,7 @@
 ---
 name: arkcli-shared
-version: 0.2.2
-description: "Shared Ark CLI execution protocol for BytePlus: first-use setup, authentication gates, command routing, structured output, safety, and confirmation handling. Read this Skill before using any other arkcli-* Skill."
+version: 0.3.0
+description: "Shared Ark CLI execution protocol for BytePlus: first-use setup, authentication gates, command routing, structured output, safety, confirmation handling, version checks, and explicit upgrades. Trigger directly when the user asks whether Ark CLI is current, requests a live version refresh or upgrade, or when any other arkcli-* Skill needs common context."
 metadata:
   requires:
     bins: ["arkcli"]
@@ -19,14 +19,17 @@ each capability Skill.
 - before using any other BytePlus `arkcli-*` Skill;
 - on first use, before the owning capability is known;
 - when authentication, profile, output, confirmation, or command-routing rules
-  are needed by more than one capability.
+  are needed by more than one capability;
+- when the user asks whether Ark CLI is current, requests a live registry
+  refresh, or explicitly asks to upgrade Ark CLI.
 
 ## When NOT To Trigger
 
-This shared protocol is not the final destination for a capability-specific
-task. After applying the common rules, continue with the owning BytePlus Skill.
-Do not use this file as a substitute for command-specific flags, output fields,
-or recovery guidance.
+Except for the version-check and explicit-upgrade workflow owned by
+[`references/update.md`](references/update.md), this shared protocol is not the
+final destination for a capability-specific task. After applying the common
+rules, continue with the owning BytePlus Skill. Do not use this file as a
+substitute for command-specific flags, output fields, or recovery guidance.
 
 ## References
 
@@ -36,6 +39,7 @@ Load detailed shared guidance only when needed:
 |---|---|
 | Global flag or runtime override diagnosis | [`references/global-flags.md`](references/global-flags.md) |
 | Default model or Endpoint selection | [`references/profile-defaults.md`](references/profile-defaults.md) |
+| Version status, live refresh, or explicit Ark CLI upgrade | [`references/update.md`](references/update.md) |
 | Control-plane versus data-plane credential recovery | [`../arkcli-auth/references/auth-modes.md`](../arkcli-auth/references/auth-modes.md) |
 | Resolving resources owned by the current identity | [`../arkcli-auth/references/identity-resolution.md`](../arkcli-auth/references/identity-resolution.md) |
 | Account-opening and payment verification before billable writes | [`../arkcli-auth/references/realname-gate.md`](../arkcli-auth/references/realname-gate.md) |
@@ -52,9 +56,9 @@ Load detailed shared guidance only when needed:
 - The control-plane environment is `prod` by default. Use `--env stg` only
   when the user explicitly requests the BytePlus staging environment.
 - BytePlus supports the `en_us` UI locale only.
-- Route version checks, update notices, and explicit upgrades to
-  [`arkcli-update`](../arkcli-update/SKILL.md). An available release never
-  authorizes an automatic update.
+- Load [`references/update.md`](references/update.md) for version checks and
+  explicit upgrades. Route `update.mode` reads, writes, and automatic-gate
+  interpretation to [`../arkcli-config/SKILL.md`](../arkcli-config/SKILL.md).
 
 ## Command selection order
 
@@ -89,8 +93,9 @@ arkcli <command> ...
 
 - Use a stable Agent ID such as `codex`, `claude-code`, `opencode`, `openclaw`,
   `trae`, or `cursor`; use `unknown_agent` only when it cannot be determined.
-- Set `ARKCLI_SKILL_NAME` to the actual owning capability, never
-  `arkcli-shared`.
+- Set `ARKCLI_SKILL_NAME` to the actual owning capability. Use
+  `arkcli-shared` only when this Skill directly owns a version check or explicit
+  upgrade; never use it for another capability's workflow.
 - Apply the full prefix to every `arkcli` command in a multi-command workflow,
   not only the first command.
 - Despite its compatibility name, `ARKCLI_NO_UPDATE_NOTIFIER=1` suppresses all
@@ -102,8 +107,8 @@ arkcli <command> ...
 
 ## Authentication gate
 
-Except for authentication commands, profile inspection, and local Skill
-listing, check authentication before a remote business command.
+Except for authentication commands, profile inspection, local Skill listing,
+and `arkcli update ...`, check authentication before a remote business command.
 
 1. Run `arkcli auth status --format json`.
 2. If the session is valid, continue the original task.

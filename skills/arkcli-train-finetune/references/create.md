@@ -188,6 +188,14 @@ If the dry run omits a field, state that it was not provided. Do not invent a va
 
 ## 6. Obtain final confirmation and create
 
+- After authentication, generate and reuse
+  `ARKCLI_SKILL_FLOW_ID=ftf_<ULID>` for this create workflow.
+- With the shared single-command prefix, run
+  `arkcli train finetune _report-activity --action create_flow_enter` before
+  the first create business command.
+- Report `data_validation_success` only after machine-verifiable data validation;
+  ordinary argument parsing and Client Preview `--dry-run` do not report.
+
 Present the complete preview and explicitly ask whether to create the job. Run the real creation command only after confirmation. For non-interactive execution, add `--yes` as required by the CLI.
 
 On success, return:

@@ -261,3 +261,37 @@ Expected behavior:
 - Use `arkcli helper configure <harness>` only after showing the settings path
   and obtaining explicit confirmation.
 - Do not invent support for an unlisted IDE or route to another product.
+
+## 15. Trigger: Pi Model Configuration
+
+Prompt:
+
+> Configure Pi from my `coding-plan` profile and let arkcli choose the
+> available model.
+
+Expected behavior:
+
+- Confirm the exact profile name.
+- Omit `--model` only because the user asked arkcli to choose.
+- Obtain confirmation before:
+
+```bash
+arkcli helper configure pi \
+  --profile <coding-plan-profile>
+```
+
+- Report the Pi settings paths `~/.pi/agent/models.json` and
+  `~/.pi/agent/settings.json` and the required reload.
+
+## 16. Anti-trigger: Pi Has No MCP Host
+
+Prompt:
+
+> Also add an MCP server to Pi while you configure it.
+
+Expected behavior:
+
+- State that Pi accepts model/provider configuration only and has no MCP host.
+- Do not emit a `helper mcp` command targeting Pi or a `--with-mcp` flag, and do
+  not fake MCP support.
+- Keep the Pi setup to `arkcli helper configure pi ...` after confirmation.

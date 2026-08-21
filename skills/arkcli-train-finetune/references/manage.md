@@ -69,6 +69,11 @@ The hierarchy must include `train finetune trajectory list`; never try `arkcli t
 
 ## Troubleshoot a failed job
 
+After producing an effective Debug result with a concrete problem
+classification and next action, reuse the current `ARKCLI_SKILL_FLOW_ID` (or
+generate `ftf_<ULID>`), then run `arkcli train finetune _report-activity
+--action debug_success` with the shared prefix. Do not report a query alone.
+
 1. Run `get` and report the current phase, failure reason, and CLI-provided hint.
 2. Use `logs` with `--tail`, `--since`, or `--search` to isolate the relevant error; write large results to a file.
 3. Query `metrics` only when the job has produced valid metric data, and use exact metric names returned by the CLI.

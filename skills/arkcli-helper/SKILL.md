@@ -1,7 +1,7 @@
 ---
 name: arkcli-helper
 version: 0.1.1
-description: "Configure an IDE, editor, or supported local coding agent for BytePlus Platform, Coding Plan, or Coding Plan Team: use arkcli helper configure to connect Claude Code, Codex, OpenCode, OpenClaw, or Hermes to a model/provider or Endpoint, helper list to inspect support, and helper reset for safe rollback. Prefer arkcli-helper over arkcli-auth or arkcli-config when the user's goal is wiring a model into a local coding client, even if profile or API-key setup is also mentioned. MCP injection and unsupported clients are outside the BytePlus Helper surface."
+description: "Configure an IDE, editor, or supported local coding agent for BytePlus Platform, Coding Plan, or Coding Plan Team: use arkcli helper configure to connect Claude Code, Codex, OpenCode, OpenClaw, Hermes, or Pi to a model/provider or Endpoint, helper list to inspect support, and helper reset for safe rollback. Prefer arkcli-helper over arkcli-auth or arkcli-config when the user's goal is wiring a model into a local coding client, even if profile or API-key setup is also mentioned. MCP injection and unsupported clients are outside the BytePlus Helper surface."
 metadata:
   requires:
     bins: ["arkcli"]
@@ -21,7 +21,7 @@ Use this Skill when the user wants to:
   does not name the exact harness yet;
 - add, install, connect, or wire a model/provider into a local coding client;
 - discover which local AI coding clients BytePlus Helper supports;
-- configure Claude Code, Codex, OpenCode, OpenClaw, or Hermes;
+- configure Claude Code, Codex, OpenCode, OpenClaw, Hermes, or Pi;
 - connect a client to a BytePlus Platform Endpoint;
 - configure a client from a `coding-plan` or `coding-plan-team` profile;
 - inspect or remove configuration previously managed by arkcli;
@@ -62,6 +62,7 @@ Supported harness IDs:
 - `opencode`
 - `openclaw`
 - `hermes`
+- `pi`
 
 Trae is not accepted because its current integration cannot write model
 provider configuration. Always use `arkcli helper list` as the runtime source
