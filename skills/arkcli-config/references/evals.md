@@ -127,8 +127,18 @@ Expected behavior:
 
 - Explain that this is a persisted local configuration write.
 - Run `arkcli config set update.mode automatic` after the explicit request.
-- Explain that the default is `notify` and npm postinstall/first run never infer automatic consent.
+- Explain that the only public modes are `automatic` and `disabled`; missing values and legacy `notify` values are presented as `disabled`.
 - Expect the current release to return automatic unavailable before writing config or consent because all production gates are closed; do not report the mode as enabled.
-- Explain that `notify` keeps checks/notices and `disabled` stops all implicit behavior.
+- Explain that `disabled` stops silent installation while retaining implicit version checks, update notices, and explicit manual update commands.
+- Never recommend the legacy `notify` setter; legacy persisted values remain compatible inputs only.
+
+After the production gate opens, default enrollment must also satisfy these rules:
+
+- Only a provably fresh BytePlus stable global npm install enters `fresh_pending`; existing or ambiguous history fails closed.
+- The first successful human business command only reports and completes grace. The second only activates exact consent. Neither schedules; only later commands may schedule.
+- AI Skills, CI, non-TTY, Preview, config/update, and internal maintenance commands do not consume grace or schedule.
+- A manual npm reinstall, downgrade, or `--ignore-scripts` install invalidates old authority and suspends automatic mode. Never claim it reenrolls automatically.
+- Persistently pin by setting `disabled` before installing `@byteplus/ark-cli@<exact-version>`. On a fresh machine, suppress the install with `ARKCLI_NO_UPDATE_NOTIFIER=1`, then persist `disabled`.
+- Report a committed automatic result once on stderr after a human business command. Never pollute stdout or change the business exit code.
 - Explain that explicit `arkcli update` and `arkcli update --check` work in every mode.
 - Never edit `$HOME/.arkcli-bp/config.yaml` directly or create a scheduled task.

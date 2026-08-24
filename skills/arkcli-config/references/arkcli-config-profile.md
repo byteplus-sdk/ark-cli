@@ -50,11 +50,27 @@ profile workflow.
 arkcli config lang get
 arkcli config lang set en_us
 arkcli config lang unset
-arkcli config set update.mode notify
 arkcli config set update.mode automatic
 arkcli config set update.mode disabled
 arkcli config reset
 ```
+
+The only public update modes are `automatic` and `disabled`. `disabled` stops
+silent installation while retaining implicit version checks, notices, and
+explicit `arkcli update` / `arkcli update --check`. Legacy `notify` values in
+persisted configuration remain compatible inputs but are not settable.
+
+After the matching production gate opens, a provably fresh BytePlus stable
+global npm install starts inert enrollment bound to the exact install. The
+first successful human business command only reports and completes grace, the
+second only activates consent, and only later commands may schedule. A manual
+reinstall or downgrade invalidates old authority and suspends automatic mode.
+
+For a persistent version pin, set `disabled` before installing the exact
+`@byteplus/ark-cli` version. On a fresh machine, set
+`ARKCLI_NO_UPDATE_NOTIFIER=1` on the historical-version install and then
+persist `disabled`. The policy lives in `$HOME/.arkcli-bp/config.yaml`, outside
+the npm package tree.
 
 BytePlus rejects `zh_cn`. `config reset` removes
 `$HOME/.arkcli-bp/config.yaml` and legacy
