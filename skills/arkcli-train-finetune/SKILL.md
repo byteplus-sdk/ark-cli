@@ -14,7 +14,8 @@ Before running control-plane commands, confirm that the active profile, project,
 - List or filter fine-tuning jobs: read [`references/list.md`](references/list.md).
 - Retrieve, observe, or operate a specific job: read [`references/manage.md`](references/manage.md).
 - Select a step by metrics, export artifacts, and deploy: read [`references/export-deploy.md`](references/export-deploy.md).
-- Do not manage datasets. Accept user-provided local files or BytePlus Torch Object Storage (TOS) URIs.
+- Do not directly manage datasets. Accept local files, BytePlus TOS URIs, `ds-*/dsv-*` references, and model-supported presets. Use [`../arkcli-datasets/SKILL.md`](../arkcli-datasets/SKILL.md) to create or maintain Dataset resources.
+- Use `--train-dataset` for an ordinary managed Dataset with the default `Multiplier=1`; use repeatable `--train-path` for multiple references, scaling, or sampling. Each entry sets at most one of `multiplier` or `sample_count`; omitting both keeps `Multiplier=1`. Each preset must choose exactly one of `inject_multiplier` or `inject_sample_count`.
 - Orchestrate metric analysis and artifact export in this skill. For custom model details, preparation of deployable versions, and endpoint creation, follow the model registry and deployment skills.
 - Do not use the low-level API Explorer as the default entry point.
 

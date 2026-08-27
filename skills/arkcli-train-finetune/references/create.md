@@ -1,7 +1,7 @@
 # Create a Fine-Tuning Job
 
 - Follow the sequence below. If the user provides insufficient information, query current capabilities and make recommendations.
-- If the user has already specified the model, version, training data, customization type (`--type`), and either explicit hyperparameters or a default strategy, first validate the model and capability as required in section 1, then run `create --dry-run` directly to obtain a server-side preview. If the dry run fails or returns insufficient information, query the relevant command according to the error.
+- If the user has already specified the model, version, training data, customization type (`--type`), and either explicit hyperparameters or a default strategy, first validate the model and capability as required in section 1, then run `create --estimate` directly to obtain the online estimate. If the estimate fails or returns insufficient information, query the relevant command according to the error.
 - Wait for user confirmation before the real `create` operation.
 
 ## 1. Query models, training options, prices, and supported inference types
@@ -85,10 +85,12 @@ Common parameters for `arkcli train finetune create`:
 | `--type` | Customization type, which may encode both the fine-tuning type and training method; when omitted, apply the default SFT + LoRA policy |
 | `--train-file` | Local training file; repeatable |
 | `--train-tos-uri` | BytePlus Torch Object Storage (TOS) URI of uploaded training data |
-| `--train-dataset` + `--train-dataset-version` | Existing training dataset reference; this skill does not create datasets |
+| `--train-dataset <dataset-id>:<version-id>` | Existing training Dataset; the legacy separate version flag remains compatible |
+| `--train-path <json>` | Repeatable ordinary training Dataset input with `dataset_id`, `dataset_version_id`, and at most one of `multiplier` or `sample_count` |
+| `--preset-dataset <json>` | Repeatable model-supported preset with `dataset_version_id` and exactly one of `inject_multiplier` or `inject_sample_count` |
 | `--validation-file` | Local validation file; repeatable |
 | `--validation-tos-uri` | TOS URI of an uploaded validation set |
-| `--validation-dataset-id` + `--validation-dataset-version` | Existing validation dataset reference |
+| `--validation-dataset <dataset-id>:<version-id>` | Existing validation Dataset; the legacy separate version flag remains compatible |
 | `--validation-percentage` | Split a validation set from the training set; mutually exclusive with an explicit validation set |
 | `--hyperparameters` | JSON string or `@file`; pass values as strings when required by the backend |
 | `--epochs`, `--lr`, `--lora-rank`, `--beta` | Legacy convenience parameters. When supported, they are merged into hyperparameters and take precedence on conflict. |
@@ -101,10 +103,27 @@ Common parameters for `arkcli train finetune create`:
 
 ## 3. Obtain and validate training data
 
-Do not create or manage platform datasets in this skill. Accept either:
+Do not create or manage platform Dataset resources in this skill. Use [`../../arkcli-datasets/SKILL.md`](../../arkcli-datasets/SKILL.md) when management is required. Job creation accepts:
 
 - Local training files.
 - Uploaded BytePlus TOS URIs.
+- Platform Dataset references in `<dataset-id>:<version-id>` form.
+- Preset Datasets explicitly supported by the model configuration.
+
+Choose one ordinary source for each training or validation set. Dataset references are mutually exclusive with the corresponding TOS or local-file source. A single ordinary Dataset defaults to `Multiplier=1`. For multiple references, scaling, or sampling, repeat `--train-path`. Each entry sets at most one of `multiplier` or `sample_count`; omitting both keeps `Multiplier=1`:
+
+```bash
+--train-path '{"dataset_id":"ds-...","dataset_version_id":"dsv-...","multiplier":2}'
+--train-path '{"dataset_id":"ds-...","dataset_version_id":"dsv-...","sample_count":500}'
+```
+
+Never combine `--train-path` with `--train-dataset`, a training TOS URI, or local training files. Presets also use repeatable JSON and must choose exactly one injection setting:
+
+```bash
+--preset-dataset '{"dataset_version_id":"dsv-...","inject_sample_count":100}'
+```
+
+The CLI verifies Dataset schema compatibility against the exact model version and customization type, and rejects presets absent from model configuration.
 
 If the user provides no data, ask for a training-set file or an existing data reference.
 
@@ -126,7 +145,7 @@ First read `dataset_schema` from `arkcli models finetune-config <model> <version
 | `ImageRecognitionRL` | Reinforcement learning for multimodal models; also compatible with text generation models |
 | `Text` | Continued Pre-Training for multimodal or text generation models |
 
-If `finetune-config` does not return `dataset_schema`, do not guess. Check the BytePlus dataset-format documentation, perform the local structural checks below, and use `arkcli train finetune create --dry-run` for model-aware server-side validation. If the format remains ambiguous, ask the user to confirm it.
+If `finetune-config` does not return `dataset_schema`, do not guess. Check the BytePlus dataset-format documentation, perform the local structural checks below, and use `arkcli dataset validate` for model-aware server-side validation. If the format remains ambiguous, ask the user to confirm it.
 
 ### Local offline checks
 
@@ -142,14 +161,14 @@ Use a structured JSON parser rather than regular expressions to validate JSON. R
 Token counting:
 
 - If the environment contains a tokenizer that matches the target model, provide a local estimate and state the tokenizer and source of error.
-- If no matching tokenizer is available, do not present character count as an exact token count. Leave token statistics to the server-side dry run.
+- If no matching tokenizer is available, do not present character count as an exact token count. Leave token statistics to the online `--estimate` flow.
 
 ## 4. Query and confirm hyperparameters
 
 | Command | When to use | Common parameters |
 |---|---|---|
 | `arkcli models finetune-config` | Query supported hyperparameters and `dataset_schema` after selecting the model version and customization type | `<model> <version>`, `--type` |
-| `arkcli train finetune create` | Preview or create a job | Use `--dry-run` for preview, then submit after confirmation |
+| `arkcli train finetune create` | Estimate or create a job | Use online `--estimate`, then submit after confirmation |
 
 Display parameter names, default values, ranges or enum values, and short descriptions. Do not rely on memory for field names.
 
@@ -169,9 +188,9 @@ Read default values and ranges for general training configuration from the `fine
 
 | Command | When to use | Common parameters |
 |---|---|---|
-| `arkcli train finetune create` | Preview or create a job | Use `--dry-run` for preview, then submit after confirmation |
+| `arkcli train finetune create` | Estimate or create a job | Use online `--estimate`, then submit after confirmation |
 
-Assemble the command according to `arkcli train finetune create --help`, then run it with `--dry-run`. If local-file upload requires confirmation, obtain user authorization first and add `--yes` only as directed by the CLI.
+Assemble the command according to `arkcli train finetune create --help`, then run it with `--estimate`. This is an online estimate, not Client Preview. If local-file upload requires confirmation, obtain user authorization first and add `--yes` only as directed by the CLI.
 
 The preview must summarize at least:
 
