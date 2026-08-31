@@ -117,6 +117,29 @@ arkcli profile keys refresh
 A one-off API key override does not replace the stored profile key used by
 Helper plan configuration.
 
+### ZCode model limits
+
+`helper configure zcode` writes `$ZCODE_HOME/v2/config.json` (default
+`$HOME/.zcode/v2/config.json`). Each model limit comes from ArkModels metadata;
+Helper does not apply a uniform fallback or infer limits from model names.
+
+- `limit.context` preserves `context_window` exactly for ZCode context
+  accounting and compaction.
+- `limit.output` becomes the request `max_tokens` budget. Known binary-KiB
+  approximations are normalized to the gateway decimal limit, including
+  `131072 -> 128000`, `262144 -> 256000`, and `393216 -> 384000`. Decimal and
+  unrecognized values remain unchanged.
+- A missing field is omitted independently. If both fields are unknown, the
+  entire `limit` object is omitted. `ark-code-latest` does not inherit a
+  static model limit when authoritative target metadata is unavailable.
+
+For an `InvalidParameter` 400 caused by an old ZCode output limit, upgrade
+ArkCLI, rerun the original `arkcli helper configure zcode ...` command, and
+fully quit the ZCode process, reopen it, and start a new session. Switching
+models or continuing an existing session does not hot-reload the provider
+configuration. Do not convert `limit.context` to decimal or maintain a manual
+model-name override.
+
 ## Platform Profiles
 
 For a Platform profile, the exact form is:
@@ -157,6 +180,7 @@ BytePlus Helper does not invent a console fallback URL for this case.
 | OpenCode | `opencode` | `$OPENCODE_CONFIG` or `$HOME/.config/opencode/opencode.json` | Restart or reload OpenCode. |
 | OpenClaw | `openclaw` | `$OPENCLAW_CONFIG_PATH` or `$HOME/.openclaw/openclaw.json` | Restart or reload OpenClaw. |
 | Hermes | `hermes` | `$HOME/.hermes/config.yaml` and `$HOME/.hermes/.env` | Restart or reload Hermes. |
+| ZCode | `zcode` | `$ZCODE_HOME/v2/config.json` or `$HOME/.zcode/v2/config.json` | Fully quit ZCode, reopen it, and start a new session; existing sessions do not hot-reload provider config. |
 
 `arkcli helper list` reports the Codex catalog path
 `$HOME/.codex/config.toml`. This is an inspection hint, not the default write

@@ -295,3 +295,21 @@ Expected behavior:
 - Do not emit a `helper mcp` command targeting Pi or a `--with-mcp` flag, and do
   not fake MCP support.
 - Keep the Pi setup to `arkcli helper configure pi ...` after confirmation.
+
+## 17. Recovery: ZCode Decimal Output Limit
+
+Prompt:
+
+> ZCode returns `InvalidParameter` for `glm-5.2`, and its configured output
+> limit is `131072` while the gateway accepts only `128000`.
+
+Expected behavior:
+
+- Route to `arkcli-helper`.
+- Explain that ZCode preserves authoritative context metadata but normalizes
+  the output request budget from the binary-KiB approximation to the gateway
+  decimal limit.
+- Recommend upgrading ArkCLI, rerunning `arkcli helper configure zcode`, fully
+  quitting and reopening ZCode, and starting a new session.
+- Do not reduce `limit.context`, hardcode GLM model limits, or recommend a
+  permanent manual edit of the generated configuration.

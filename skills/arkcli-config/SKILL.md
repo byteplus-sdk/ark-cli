@@ -131,8 +131,11 @@ Only a stable global npm install that can prove `$HOME/.arkcli-bp` did not previ
 - The first successful human business command reports automatic mode on stderr and completes grace. It does not schedule an update.
 - The second successful human business command activates exact-install consent. It still does not schedule an update.
 - Only the third and later human business commands may schedule an automatic patch update.
+- Every CLI process started by npm `postinstall` (including its `+connect` invocation), and a user-run `+connect`, skips enrollment, implicit version checks, and automatic scheduling.
 - AI Skills, CI, non-TTY invocations, Client Preview, `config`, `update`, and internal maintenance commands neither consume enrollment nor schedule automatic work.
 - A committed update result appears once on stderr after the next successful human business command. It never changes stdout or the business exit code.
+
+Production automatic updates deliberately keep the 24/48/72-hour and 10%/50%/100% cohort admission disabled. The original rollout implementation and regression coverage remain in place, and the online Probe still requires two independent observations. Normal automatic updates still require exact consent, a live registry target/SRI/tarball check, a one-use reservation, backoff, and every staged-apply safety boundary.
 
 A manual npm reinstall, downgrade, changed install identity, or `--ignore-scripts` install suspends automatic mode when exact pending or consent evidence is absent. Never reuse authority from the previous install. The user can resume with `arkcli config set update.mode automatic`. For a persistent version pin, run:
 
