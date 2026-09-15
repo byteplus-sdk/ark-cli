@@ -67,8 +67,11 @@ separately.
 
 If the effective project or Region is unexpected:
 
-1. Compare top-level `project_name` and `active_profile.region` with
-   `arkcli profile show --format json`.
+1. Read top-level `project_name` and nested `profile.region` from
+   `arkcli auth whoami --format json`. Use `profile show/list/keys list` only
+   for an explicit Profile-management request after warning that they may synchronize
+   remote keys and write back the local key inventory or default
+   key.
 2. Check which profile won through `--profile`, `ARK_PROFILE`, and the
    persisted default profile.
 3. Remember that `--project-name`, `--region`, `ARK_PROJECT_NAME`, and

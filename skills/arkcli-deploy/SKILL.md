@@ -60,7 +60,7 @@ metadata:
 | Only want to try the model output / one-off generation | `arkcli-chat` / `arkcli-gen` | `arkcli +chat --model <id> '...'` or `arkcli +gen --model <id> '...'` |
 | Model ID not decided | `arkcli-models` | `arkcli models search <keyword>` or `arkcli models list` |
 | 401 / authentication failed | `arkcli-auth` | `arkcli auth status`; if needed, `arkcli auth login` |
-| profile / region / project does not match expectations | `arkcli-config` | `arkcli profile show --format json` (the old `arkcli config show` is deprecated) |
+| profile / region / project does not match expectations | `arkcli-config` | Use `arkcli auth whoami --format json` for the identity summary and `arkcli resources list --format json` for defaults. Reserve reconciling `profile show/list` for explicit Profile management |
 | Scripting / CI / need fine-grained control over every parameter and to skip guardrails | `arkcli-infer-endpoint` | `arkcli infer endpoint create --model <id> --name <ep>` |
 
 ## Typical workflow

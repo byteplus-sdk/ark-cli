@@ -12,6 +12,7 @@
 | `arkcli models versions <model>` | Find versions of a base model; fine-tuning support shown here is informational only | None |
 | `arkcli train finetune capability get` | Query the fine-tuning types and training methods supported by a base model version or the source base model of an existing custom model; treat this as authoritative | `--model`, `--version`, `--model-id` |
 | `arkcli train finetune pricing` | Query token- or instance-billed fine-tuning prices | `--model`, `--model-version`, `--type`, `--billing-method` |
+| `arkcli train finetune resource-group list` | Check resource-group access, resolve job resource requirements, and list matching groups | `--model`, `--model-version`, `--type`, `--only-matched` |
 | `arkcli infer endpoint capability get` | Query supported inference types for a base model (`model` + `version`) or custom model (`custom-model-id`) | `--model`, `--version`, `--custom-model-id` |
 
 CLI flags can evolve. Use this reference directly for routine cases; inspect `--help` when a command fails or a parameter is uncertain.
@@ -99,6 +100,7 @@ Common parameters for `arkcli train finetune create`:
 | `--save-model-limit` | Number of training artifacts to retain |
 | `--enable-trajectory` | Enable RL trajectory logging. Query the resulting rollout trajectories with `arkcli train finetune trajectory`; this requires an SSO-authenticated profile with access to the corresponding TLS topic and does not depend on the fine-tuning SDK. |
 | `--pipeline` | RL pipeline configuration file; use only when current ArkCLI can fully express the configuration |
+| `--resource-group` | Stable resource-group ID returned by `resource-group list`. Treat it as opaque and pass it unchanged; the CLI rechecks access, job resource requirements, and availability before estimation and real submission. |
 | `--yes` | Skip CLI confirmation. Add it only after the user reconfirms or explicitly asks for immediate creation. |
 
 ## 3. Obtain and validate training data
@@ -184,7 +186,40 @@ Read default values and ranges for general training configuration from the `fine
 - `save_model_limit` controls how many training artifacts are retained. Follow the current CLI/API for its default and maximum.
 - Data fault tolerance limits and the shuffle seed are data configuration, not model hyperparameters. Display them separately in the preview.
 
-## 5. Preview creation and validate configuration, data, tokens, and cost
+## 5. Query and select a stable resource group when requested
+
+When the user wants a resource group, query with exactly the same model, customization type,
+and hyperparameters that will be used for creation:
+
+```bash
+arkcli train finetune resource-group list \
+  --model <model> --model-version <version> --type <type> \
+  --hyperparameters '<same-json-as-create>' --only-matched
+```
+
+For continued training from an existing custom model, use `--model-id <cm-id>` instead of
+`--model/--model-version`. Interpret the result fail-closed:
+
+- `allowed=false` means fine-tuning resource groups are not enabled for the active account or
+  project. Do not add `--resource-group` to create.
+- `candidate_templates` are the authoritative resource requirements resolved for the exact model,
+  version, type, and hyperparameters. Never infer requirements from a group name or aggregate capacity.
+- Only an item with `matched=true` can run the current job. Treat `unmatch_reasons` as authoritative;
+  never bypass or silently ignore them.
+- If multiple groups match, show names, IDs, matched templates, and a capacity summary, then let the
+  user choose. Do not choose a group autonomously.
+- Pass the selected group to both estimate and real creation with `--resource-group <resource-group-id>`. The CLI
+  rechecks permission, candidate templates, and availability before each operation and fails fast if
+  the group no longer matches.
+- If the selected group is absent or unmatched, the error reports authoritative mismatch reasons and
+  every `matched=true` group name and ID available to the current job; it explicitly says `none` when
+  no group is usable.
+
+`resource-group list` is an online read-only preflight, not Client Preview. Do not add `--dry-run`.
+Keep all hyperparameters identical between this query and create, including convenience overrides such
+as `--epochs`, `--lr`, `--lora-rank`, and `--beta`.
+
+## 6. Preview creation and validate configuration, data, tokens, and cost
 
 | Command | When to use | Common parameters |
 |---|---|---|
@@ -201,11 +236,12 @@ The preview must summarize at least:
 - Custom and recommended hyperparameters, plus which remaining parameters use defaults.
 - Server-reported sample or token information.
 - Billing unit, unit price, and estimated cost.
+- When using a resource group: its name, ID, matched candidate templates, and preflight result.
 - Non-default data fault tolerance limits, random seed, artifact-retention limit, and similar configuration.
 
 If the dry run omits a field, state that it was not provided. Do not invent a value.
 
-## 6. Obtain final confirmation and create
+## 7. Obtain final confirmation and create
 
 - After authentication, generate and reuse
   `ARKCLI_SKILL_FLOW_ID=ftf_<ULID>` for this create workflow.
@@ -222,6 +258,7 @@ On success, return:
 - Job ID, name, and initial phase.
 - Model, version, fine-tuning type, and training method.
 - A summary of key data and hyperparameters.
+- When using a resource group, the selected resource-group ID and that submission preflight passed.
 - Console URL, if returned by the CLI.
 - A follow-up query such as `arkcli train finetune get <job-id>` or `watch <job-id>`.
 

@@ -7,6 +7,20 @@ description: arkcli +chat --include-events usage reference. In streaming mode, o
 
 In streaming mode, outputs each SDK event as one line of JSON (NDJSON), instead of human-readable `Thinking:` / `Response:` text.
 
+## Prepare delivery before submitting once
+
+When the user requests a complete event file, establish a host-permitted save method
+and check that the destination does not exist before the first real request.
+Prefer capturing that request's stdout directly into a new file. No deletion is required:
+keep partial files on failure and mark them incomplete. If the host rejects redirection,
+scripts or file tools, resolve the local save method before calling the model.
+Reuse the complete output already received. Do not issue another request merely to save
+its output. If only a truncated display remains, report that the model call succeeded but
+delivery is incomplete; retain the known response ID, never fabricate missing events or
+substitute a second response for the first. Do not retry automatically to repair local delivery.
+Strictly parse every saved NDJSON line and require one successful completion event before
+extracting assistant output text. Malformed lines must fail validation, not be discarded.
+
 ## When to use
 
 - **autotest** —— Automated tests need per-event assertions (event type, usage, response ID, etc.).
@@ -97,7 +111,7 @@ When `--include-events` is enabled, `ChatStreamDelta` at the service layer carri
 | `--include-events` has no output | `--stream` is not included; this flag takes effect only in streaming mode. |
 | Output is plain text instead of JSON | `--include-events` is not included, so it falls back to human-readable mode. |
 | The number of NDJSON lines is lower than expected. | Some event types (such as `response.output_item.added`) are recognized only in PR-4; the current version decodes only common events. |
-| `jq` parsing error | Some lines may not be valid JSON (such as the `[DONE]` terminator); use `jq -R 'fromjson?' ` for fault tolerance. |
+| `jq` parsing error | Preserve the original output and report invalid NDJSON; do not discard malformed lines to claim a complete valid stream. |
 
 ## Autotest unlock checklist
 

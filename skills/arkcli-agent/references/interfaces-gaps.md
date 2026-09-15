@@ -3,7 +3,7 @@
 ## Interface Links
 
 - Agent: `CreateAgent` / `GetAgent` / `ListAgents` / `UpdateAgent` / `DeleteAgent` / `ListAgentVersions`
-- Skill: data-plane `POST /api/v3/skills` for `CreateSkill` + TOP `Get/List/DeleteSkill` and `Create/List/Get/DeleteSkillVersion` (BytePlus supports custom skills only; SkillHub / market skill via `ListMarketSkills` is unavailable)
+- Skill: data-plane `POST /api/v3/skills` for `CreateSkill` + TOP `Get/List/DeleteSkill` and `Create/List/Get/DeleteSkillVersion` (BytePlus supports `custom`, `ark`, and `all` sources for discovery; Ark skills are read-only, and SkillHub / market skill via `ListMarketSkills` is unavailable)
 - Env: `CreateEnvironment` / `GetEnvironment` / `ListEnvironments` / `UpdateEnvironment` / `DeleteEnvironment`
 - Session: `CreateSession` / `GetSession` / `ListSessions` / `UpdateSession` / `DeleteSession`
 - Session data-plane: `GET/POST /api/v3/sessions/:session_id/resources`, `GET/POST /api/v3/sessions/:session_id/events`, `GET /api/v3/sessions/:session_id/events/stream`, `GET /api/v3/sessions/:session_id/threads`, `GET /api/v3/sessions/:session_id/threads/:thread_id`
@@ -14,11 +14,12 @@
 ## Aligned / Acceptable Alternatives
 
 - Agent / Env / Session / Memory / Vault / Credential CRUD commands are already available.
+- Memory entry creation uses `--path` and `--content`; updates can change Path / Content. Neither operation supports tags. Memory update has no `--tags` flag; top-level Tags keys (case-insensitive) from `--file` / stdin are filtered out and do not save or change tags.
 - Environment setup scripts are supported through `--setup-script`, which writes `Config.SetupScript` and accepts `@file`.
 - Session creation, `+new session`, and `+iterate` support `AgentWithOverrides` and Environment overrides through `--agent-overrides` and `--environment-overrides`.
 - Session creation, `+new session`, and `+iterate` support mounting an existing TOS directory through `--tos-path`.
 - Environment-variable credentials and managed OAuth refresh fields are supported by typed flags. Sensitive values accept `@file`.
-- Skill searches use TOP `ListSkillsForTop` on custom skills only (SkillHub / market skill unavailable in BytePlus); custom skill zips are uploaded via the data plane `POST /api/v3/skills`, and custom skill version updates, listing, downloads, and deletions use OpenTOP Skill/SkillVersion actions.
+- Skill list/search use TOP `ListSkillsForTop` with `--source custom` (default), `--source ark`, or `--source all`; `all` omits the backend Source filter. Ark skills are read-only; SkillHub / market skills are unavailable in BytePlus. Custom skill zips are uploaded via the data plane `POST /api/v3/skills`, and custom skill version updates, listing, downloads, and deletions use OpenTOP Skill/SkillVersion actions.
 - Files API already has `list/get/upload/wait/delete` commands; `session resources add --path` can automatically upload -> wait active -> mount.
 - Session events/list/stream, threads/list/get are already implemented directly on the data plane, without relying on ArkBFF.
 - `ListSessionsForTop` is aligned for session lists: `--agent-id` sends `AgentIds`, `--page/--limit` sends `PageNumber/PageSize`, and `--page-all` fetches continuous pages.

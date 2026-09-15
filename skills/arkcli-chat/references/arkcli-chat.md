@@ -21,6 +21,16 @@ A high-level wrapper for the data-plane Responses API (`POST /responses`). A sin
 >
 > If you have just run `models search/list`, you can directly reuse the returned `primary_version` parameter without calling `get` again.
 
+**Plan delivery before making the request:** When the user asks to save a result,
+capture the complete non-streaming JSON stdout in a new local file. Extract
+`.content`, `.id`, and `.usage` from that same successful response. Saving,
+format checks, and content verification are local operations, not reasons to
+repeat a successful `+chat` call. The examples below are alternatives for
+different tasks, not successive requests to retrieve different fields.
+See [text-format.md](text-format.md#save-the-structured-body) for a capture/save
+example. Explicitly requested continuation or regeneration still uses new
+requests; preserve each turn separately and use the real preceding response ID.
+
 ```bash
 # Plain-text chat
 arkcli +chat --model dola-seed-2-1-turbo-260628 "Introduce yourself in three sentences"
@@ -58,6 +68,25 @@ arkcli +chat --model dola-seed-2-1-turbo-260628 --previous-response-id "$RESP_ID
 # Full JSON output
 arkcli +chat --model dola-seed-2-1-turbo-260628 --format json "hello"
 ```
+
+## Client preview
+
+Use the command-local `+chat --dry-run` to inspect `preview.v1` without network
+requests, credential refresh, file writes, inference charges or response storage.
+It does not establish that a Key, model, quota or parameter combination is usable
+online. Keep online admission inside the chosen BytePlus profile and Region.
+
+Inspect `summary.would_send` for sampling values, token limits, `store`, tool-call
+limits, `caching`, `thinking`, `expire_at`, `reasoning`, and valid JSON
+`text.format`. Explicit `0` and `false` differ from omission. Legacy aliases
+`prompt`, `inputs`, `text_format` and `reasoning_effort` remain available; this
+object is not a directly sendable wire request.
+
+Preview preserves its existing admission behavior: `validated: true` does not
+prove that a local asset exists, a strict schema compiles, or non-finite sampling
+values can be sent. Non-JSON-representable schema/sampling fields may be absent;
+real execution retains its existing validation. See [evals.md](evals.md) for
+regression scenarios, including exact large integers and nested URL redaction.
 
 ## Parameter
 
@@ -132,6 +161,10 @@ Response:
 In stream mode, JSON is not output. The result is printed directly, followed by a newline when it ends.
 
 ### Parse with jq (common)
+
+These are independent invocation examples. If a successful response was already
+captured, read that file instead, for example `jq -r .content response.json`.
+Do not make another model request just to retrieve a different field.
 
 ```bash
 # Get the assistant text body

@@ -7,14 +7,19 @@ profile:
 
 | Command | Remote call | Local change |
 |---|---:|---:|
-| `keys list` | No | No |
+| `keys list` | Yes, reconciles against the profile's live key source | May write the reconciled inventory and select or clear the default when membership changed |
 | `keys use <index|api-key>` | No | Changes the profile's default API key |
 | `keys refresh` | Yes | Synchronizes the profile's available API keys |
 
 `arkcli auth apikey` is a separate interactive identity-level key-selection
-flow. Do not use it for read-only inventory.
+flow. Do not substitute it for explicit Profile inventory management.
 
 ## List keys
+
+Before executing `keys list`, explain that the command contacts the applicable
+remote key source, reconciles the live result with the local inventory, and may
+write the inventory or select/clear the local default. Masking protects output
+secrets; it does not make this operation side-effect free.
 
 ```bash
 arkcli profile keys list --format json

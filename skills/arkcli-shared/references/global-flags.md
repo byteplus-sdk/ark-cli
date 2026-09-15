@@ -28,8 +28,12 @@ subprocesses. An unsupported leaf rejects the flag explicitly.
 
 When persisted profile values and runtime behavior differ:
 
-1. Run `arkcli auth status --format json` to inspect effective runtime values.
-2. Run `arkcli profile show --format json` to inspect persisted profile data.
+1. Run `arkcli auth status --format json` and `arkcli auth whoami --format json`
+   to inspect the masked runtime identity/Profile summary.
+2. Use `arkcli resources list --format json` for defaults and routing. Reserve
+   `profile show/list/keys list` for explicit Profile management after warning
+   that they may synchronize remote keys and write back the local key inventory
+   or default key.
 3. Check supported invocation flags and environment variables before changing
    the profile. `--region`, `--project-name`, `ARK_REGION`, and
    `ARK_PROJECT_NAME` are not runtime override mechanisms.

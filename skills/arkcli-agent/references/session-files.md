@@ -46,18 +46,24 @@ arkcli agent env create \
 
 ### Session Overrides
 
+Before overriding runtime parameters, query the target model's [parameter metadata](model-config.md). Query again when changing models; do not inject defaults automatically.
+
 A Session may override an existing Agent or Environment for that Session only. Non-null fields such as Agent `System`, `Tools`, `McpServers`, `Skills`, and `Multiagent`, and Environment `Config`, use the service's replacement semantics. Supply complete arrays instead of expecting them to merge with the base Agent.
 
 ```bash
 arkcli agent session create \
   --agent-id agent-xxx \
   --environment-id env-xxx \
-  --agent-overrides '{Type: agent_with_overrides, Tools: [...]}' \
+  --agent-overrides '{model: {id: dola-seed-2-1-pro-260628, thinking: enabled, reasoning_effort: low, service_tier: auto}, Tools: [...]}' \
   --environment-overrides @./environment-overrides.yaml \
   --format json
 ```
 
 `--agent-overrides` maps to `AgentWithOverrides`; `--environment-overrides` maps to `Environment`. If an override omits `Id`, the CLI fills it from `--agent-id` or `--environment-id`. These are one-of request variants, so the CLI removes the corresponding `AgentId`/`AgentVersion` or `EnvironmentId` from the final request. Do not use `--agent` and `--agent-overrides` together. `arkcli +new session` and `arkcli +iterate` accept the same override flags.
+
+`AgentWithOverrides.Model` supports only `Id`, `Speed`, `Thinking`, `ReasoningEffort`, and `ServiceTier`. `Id` may select a different model for the Session. ArkCLI removes `Provider`, `Protocol`, `BaseUrl`, `Headers`, and any other undefined Model fields from the final request instead of failing locally; do not rely on removed fields taking effect. Validate `Thinking`, `ReasoningEffort`, and `ServiceTier` against the **selected model's** metadata because supported values vary by model. Managed Agent uses the `ServiceTier` product values `auto`, `default`, and `fast`; it does not use `priority`. Do not infer or map a priority concept from another product. The service may resolve `auto` to the effective `default` value when the Session is read back; that is not evidence that the override was dropped. If target-model metadata is unavailable, omit uncertain runtime parameters and let the service apply model defaults.
+
+The same normalization and Model-field filtering applies to `--agent-overrides`, `--agent-overrides @file`, and `AgentWithOverrides` supplied through the general `session create --file` payload. Explicit empty values such as `--agent-overrides=` or `--environment-overrides=` are invalid; ArkCLI returns a validation error and does not create a Session.
 
 ### Environment Status Filtering
 

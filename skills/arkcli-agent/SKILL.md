@@ -8,7 +8,7 @@ metadata:
   cliHelp: "arkcli agent --help"
 ---
 
-> **BytePlus support note:** Managed Agent commands are available. Agent skill selection is custom-only; Market/SkillHub sources are not supported.
+> **BytePlus support note:** Managed Agent commands are available. `custom`, `ark`, and `all` Skill sources are supported; public Market/SkillHub is not.
 
 # arkcli-agent
 
@@ -22,10 +22,12 @@ Before execution, read the corresponding reference based on the user's intention
 
 | Input | Required Handling |
 | --- | --- |
-| No model specified | Use `agent model list --query` and select an exact `items[].model` from the Managed Agent allowlist; never invent a model ID |
-| No skill specified | Search the current account's custom skills only; BytePlus does not provide Market/SkillHub skills |
+| No primary Agent model specified | Start with `arkcli agent model list --format json` and read all candidates; do not add query by default, truncate results, or invent IDs. Fetch exact-version metadata only for explicit context/modality/capability requirements |
+| Choose a tool's bound model | Use `agent model list --usage tool --format json` without defaulting to `--primary-only`; place the selected `items[].model` in `Tools[].Configs[].Models[].ID`, not the Agent's primary model |
+| No skill specified | Search the current account's custom skills first; `ark` and `all` are available for read-only discovery, while Market/SkillHub is not |
 | Local skill zip provided | Run `agent skill create --zip`, then use the returned `skill-...` ID and version when creating the Agent |
 | No tools specified | Let the CLI inject the complete default toolset; an explicit `--tool` replaces the full default array |
+| No explicit request for multimodal tools | Do not query tool models or add a multimodal toolset, image_generate/video_generate, or their Models. Retain ordinary default tools; a model's multimodal input support is not permission to add generation tools |
 | No environment specified | When creating a Session, select the latest environment in the current project; ask for one only if none is available |
 | Agent created | Read it back with `agent agent get <agent-id> --format json` and report the final Model, System, Tools, Skills, MCP servers, and extension fields |
 | The user expects a reply | Use `+new session ... --message` or `events send ... --stream` for short work; use `--poll` or cursor-based event polling for large or long-running work |
@@ -37,34 +39,49 @@ Before execution, read the corresponding reference based on the user's intention
 | Create/Update/Delete Managed Agent | `arkcli agent agent ...` | [`references/agent.md`](references/agent.md) |
 | Copy an Existing Agent and Rename/Modify Configuration | `arkcli +new-agent --fork <agent-id> [--name <new-name>]` | [`references/agent.md`](references/agent.md#Copy-agent) |
 | Choose Available Models for Creating an Agent | `arkcli agent model list` | [`references/agent.md`](references/agent.md#model selection) |
-| Choose a Skill for Creating an Agent | Search custom skills only (BytePlus does not expose Market/SkillHub — see [`references/skills.md`](references/skills.md)) | [`references/skills.md`](references/skills.md) |
+| Choose Models for Tools Supporting Bindings, Such as Image/Video Generation | `arkcli agent model list --usage tool` | [`references/agent.md`](references/agent.md#discover-tool-models-and-cache-behavior) |
+| Query Supported Model Runtime Values and Defaults | `arkcli agent model config <foundation-model-name>` | [`references/model-config.md`](references/model-config.md) |
+| Choose a Skill for Creating an Agent | Search custom skills first; BytePlus also supports `--source ark/all`, but not Market/SkillHub | [`references/skills.md`](references/skills.md) |
 | Query/Use Custom Skills in the Current Account | First `agent skill list --source custom --limit 100`, continue with `NextPage` if no matches; use `--page-all` or `--skill <skill-id>` for complete candidates | [`references/skills.md`](references/skills.md) |
+| Query Ark Skills or All TOP Skills | `agent skill list --source ark` or `--source all`; Ark skills are read-only | [`references/skills.md`](references/skills.md) |
 | Upload a Local Custom Skill Zip | `arkcli agent skill create --zip <file>` or `arkcli agent agent create --skill-zip <file>` | [`references/skills.md`](references/skills.md) |
+| Scan or Import Skills from GitHub | `agent skill github scan <repo>` / `agent skill github import <repo> --path ...|--all` | [`references/skills.md`](references/skills.md) |
 | Manage Custom Skill Versions or Delete a Skill | List all versions first, then delete in dependency order: non-latest versions, latest version, and finally the Skill | [`references/skills.md`](references/skills.md) |
 | Create a Session Environment or Session | `arkcli agent env ...` or `arkcli agent session ...` | [`references/session-files.md`](references/session-files.md) |
+| Self-hosted environments, queue diagnostics, or stopping work | `agent env create --runtime-type self_hosted` / `agent env work list/get/stats/stop` | [`references/self-hosted.md`](references/self-hosted.md) |
 | Set an Environment Initialization Script | `arkcli agent env create/update --setup-script @./bootstrap.sh` | [`references/session-files.md`](references/session-files.md#environment-setup-script) |
 | Override an Agent or Environment for One Session | `arkcli agent session create --agent-overrides ... --environment-overrides ...` | [`references/session-files.md`](references/session-files.md#session-overrides) |
+| Upgrade an Existing Session's Model, Agent Version, or Runtime Configuration | `arkcli agent session upgrade <session-id>` | [`references/session-upgrade.md`](references/session-upgrade.md) |
 | Mount a TOS Directory When Creating a Session | After the user provides the path, use `arkcli agent session create --tos-path tos://<bucket>/<prefix>/`; never guess the bucket or prefix | [`references/session-files.md`](references/session-files.md#session-tos-resource) |
 | Continue an Existing Session | `arkcli +new session` | [`references/events-chat.md`](references/events-chat.md) |
 | Create a New Session and Chat | `arkcli +new session <agent-id> --environment-id <env-id>` | [`references/events-chat.md`](references/events-chat.md) |
 | Send Messages to or Stream Replies from a Session | Plain `events send` is write-only; add `--stream` for SSE replies (`--wait` remains a compatibility alias), use `--poll` for long work, or follow with `+tail`. Streaming requests Agent message/thinking deltas by default; use `--no-event-deltas` for complete events only | [`references/events-chat.md`](references/events-chat.md) |
+| Compact Session Context | `arkcli agent session compact <session-id> [--instructions <text|@file>]` | [`references/events-chat.md`](references/events-chat.md) |
 | Diagnose or Export a Session | `arkcli +debug <session-id>` or `arkcli +export <session-id>` | [`references/debug-export.md`](references/debug-export.md) |
 | Upload a File to an Existing Session | `arkcli agent session resources add <session-id> --path <file>` | [`references/session-files.md`](references/session-files.md) |
 | Query or Upload Files via the Files API | `arkcli agent file upload/list/get/wait/delete` | [`references/session-files.md`](references/session-files.md) |
 | Manage Memory Stores or Memories | `arkcli agent memory-store ...` | [`references/interfaces-gaps.md`](references/interfaces-gaps.md) |
 | Query MCP/Vault/Credential/MCP OAuth Providers | `arkcli agent vault oauth-provider list` or `arkcli agent vault ...` or `arkcli agent +mcp-login ...` | [`references/mcp-vault.md`](references/mcp-vault.md) |
 
+## Model Discovery: Primary Agent vs Tool Models
+
+- Default `--usage agent` selects Agent models using `ep_agent.support`; `--usage tool` uses version-level `epa_tool_model.support` without intersecting the two gates. Neither query defaults to `--primary-only` or excludes candidates by `primary_version`; add that flag only when the user explicitly asks for primary versions.
+- Bind the returned `items[].model`, not the internal `id` (such as epm-*). Only configure Models for tools that support bindings; see [binding fields and full Tools replacement](references/agent.md#tool-model-bindings-supported-tools-only).
+- Both usages share a 5-minute full-version ArkModels cache and expose `cache.source/fetched_at/expires_at`. Add `--refresh-cache` only when a refresh is needed, not on every lookup. Failures enforce a 1-minute cooldown even for forced refresh; an error is not an empty candidate list.
+- Lists do not truncate candidates or expose context/modality/capability filter flags. Only for explicit requirements, query `ListModelMetaDatas` using each candidate's `name` and `version`, then filter. Do not fetch per-model metadata otherwise. See [exact-version filtering](references/agent.md#exact-version-filtering) for fields and missing-data handling.
+- `agent model config` queries runtime parameters, not tool eligibility. Explicit model IDs can still be submitted to create/update for backend validation; do not introduce a cache-based write gate. See [discovery parameters and cache boundaries](references/agent.md#discover-tool-models-and-cache-behavior), including query-mode enrichment.
+
 ## Authentication and Profiles
 
 - Before business commands, run `arkcli auth status --format json`. If not logged in, SSO expired, or STS refresh failed, handle login first.
-- For data plane Files, Session resources, events, and threads, an ARK API Key is needed. The CLI will prioritize the `api_key` in the profile, or use the global `--api-key` if not set.
+- For data plane Files, Session resources, events, and threads, an ARK API Key is needed. The effective key priority is `--api-key` > `ARK_API_KEY` > the profile's `api_key`; explicit flag or environment overrides do not change the stored profile key.
 - In online environments, use `--env prod` by default; do not default to `stg`.
 - Non-interactive SSO logins are two-step: first `arkcli auth login --no-browser` to get a URL; users need to paste the base64 code to complete the login with `arkcli auth login --no-browser --code <code>`.
 
 ## Pagination
 
-- Support pagination for lists with `--page-all` global flag; if not explicitly set, the CLI defaults to fetching 100 items per page. The CLI defaults to requesting up to 10 pages, with `--page-limit <N>` to adjust the page size and `--page-delay <ms>` to control the interval.
-- Supported: Agent/versions, Env, Session, Skill (custom only — BytePlus does not expose Market/SkillHub), Memory Stores/Memories, Vaults/Credentials/OAuth Providers, Files, Session Events/Threads. The CLI will use the backend pagination mechanisms (`Page`, `PageNumber`, `PageToken`, `after`) and merge the results.
+- Use the global `--page-all` flag for supported lists. Automatic pagination defaults to 100 items per page and at most 10 pages. `--page-limit <N>` sets the maximum number of pages to fetch, not the number of items per page; use the command's local page-size flag (such as `--limit`, where supported) to change items per page. `--page-delay <ms>` controls the interval between pages.
+- Supported: Agent/versions, Env, Session, Skill (`custom`, `ark`, and `all`; BytePlus does not expose Market/SkillHub), Memory Stores/Memories, Vaults/Credentials/OAuth Providers, Files, Session Events/Threads. The CLI uses the backend pagination mechanisms (`Page`, `PageNumber`, `PageToken`, `after`) and merges the results.
 - `agent model list`, `memory-store creators`, and `session resources list` do not have pagination mechanisms; do not assume `--page-all` will complete the results. If `--page-limit` is set, check the `NextPage`, `has_more`, or `TotalCount` in the response to determine if more data needs to be fetched.
 
 ## Confirmation for Deletion
@@ -94,14 +111,16 @@ Before execution, read the corresponding reference based on the user's intention
 | Command | Description |
 | --- | --- |
 | `arkcli agent agent list/get/create/update/delete/versions` | CRUD for Managed Agents and versions |
-| `arkcli agent model list` | Query the whitelist of Managed Agent models; use `--query` to enhance or sort the whitelist with model directory details; the `items[].model` can be used as `--model` |
+| `arkcli agent model list` | Default: primary models whose `items[].model` goes into `--model`. With `--usage tool`, use it for `Configs[].Models[].ID`. Optional `--query` enriches details and ranking |
 | `arkcli +new-agent` | Enhanced entry for creating an Agent; supports `--fork/--from` to copy an existing Agent and create a new one |
 | `arkcli +iterate` | Update Agent configuration, create a new Session, and run one-shot/REPL; `--environment-id/--env-id` can be omitted, and the latest environment will be chosen automatically |
-| `arkcli agent skill search/list/get/create/update/delete/versions/download` | Query custom skills, upload zip files, create/list/download versions, or delete in dependency order: non-latest versions, latest version, then Skill; BytePlus defaults `list/search` to `--source custom` through TOP `ListSkills` |
+| `arkcli agent skill search/list/get/create/update/delete/versions/download/set-protection/github` | Query custom/Ark skills, import GitHub skills, control custom-skill protection, manage versions, or delete in dependency order; BytePlus defaults `list/search` to `--source custom` and rejects only Market/SkillHub |
 | `arkcli agent env list/get/create/update/delete` | CRUD for Environment |
 | `arkcli agent session list/get/create/update/delete` | CRUD for Session |
+| `arkcli agent session upgrade <session-id>` | Upgrade runtime configuration in place using snake_case; read back to verify completion |
 | `arkcli agent session resources list/add/get` | CRUD for data plane session resources; `get` is a local filter based on `list` |
 | `arkcli agent session events list/send/stream` | Data plane events; streaming requests Event Deltas by default and `--no-event-deltas` falls back to complete events. `user.custom_tool_result` requires `custom_tool_use_id`; `user.tool_result` is self-hosted only |
+| `arkcli agent session compact <session-id>` | Actively compact context; normal thread idle/end_turn plus session idle/end_turn completes the command, while a compacted event is optional confirmation of actual compaction |
 | `arkcli agent session threads list/get` | CRUD for data plane threads |
 | `arkcli agent file list/get/upload/wait/delete` | CRUD for Files API |
 | `arkcli agent memory-store list/get/create/update/delete` | CRUD for Memory Stores |

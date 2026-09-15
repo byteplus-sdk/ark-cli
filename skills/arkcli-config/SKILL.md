@@ -1,6 +1,6 @@
 ---
 name: arkcli-config
-version: 0.3.0
+version: 0.3.1
 description: "Diagnose BytePlus Ark CLI configuration precedence, effective profile, Region, project, base URL, API key, environment, UI language, persisted update mode, and local reset behavior. Use for unclear overrides, update opt-in/out, legacy config migration, inspection, or reset."
 metadata:
   requires:
@@ -54,18 +54,17 @@ API key selection.
 
 ## Agent execution order
 
-1. Start with structured, read-only commands:
-
-   ```bash
-   arkcli profile show --format json
-   arkcli profile list --format json
-   ```
-
-2. If the effective identity is still unclear, inspect the masked
-   authentication summary:
+1. Follow the shared authentication boundary and inspect the masked current context:
 
    ```bash
    arkcli auth status --format json
+   arkcli auth whoami --format json
+   ```
+
+2. For Chat/Gen defaults and routing, follow the Resources Skill:
+
+   ```bash
+   arkcli resources list --modality text --format json
    ```
 
 3. Identify invocation-scoped flags and relevant environment variables without
@@ -73,6 +72,17 @@ API key selection.
 4. Explain the winning source explicitly before proposing a change.
 5. After the configuration issue is resolved, return to the user's original
    task.
+
+`profile show/list/keys list` may synchronize remote keys and write back the
+local key inventory or default key. Masked output does not imply no side
+effects. Do not use these commands for routine Chat/Gen admission or when the
+user requests no configuration/key changes; deprecated `config show/list`
+is not a workaround. Use `profile show` or `profile list` only for an explicit
+Profile inspection/management task, explaining the synchronization impact first.
+
+The Profile fields in `auth whoami` are a persisted-slice summary, not proof
+that a temporary key/base-URL override or data-plane request works. State
+unverified facts as unknown rather than changing configuration to fill gaps.
 
 ## Resolution precedence
 
@@ -166,12 +176,14 @@ Do not generate new automation with deprecated commands.
 
 ## Guard Checklist
 
-- Diagnose with `profile show/list` before changing anything.
+- For routine admission, use `auth status/whoami` and `resources`; preserve the
+  user's no-configuration-change intent, including implicit key reconciliation.
 - Never echo a full token, API key, access key, or secret key.
 - Confirm the exact target before `profile use`, `profile delete`, project
   changes, language changes, or `config reset`.
-- The entire `config` and `profile` domains reject `--dry-run`; inspect with
-  `show/list`, restate the exact mutation, and obtain confirmation instead.
+- The entire `config` and `profile` domains reject `--dry-run`; restate the
+  exact mutation and obtain confirmation. Do not describe `profile show/list`
+  as a no-write substitute for preview.
 - Keep BytePlus on `ap-southeast-1`; do not retry through another product.
 - Return to the user's original business task after configuration is fixed.
 - Use only the allowlisted `update.mode` key; never treat `config set` as a generic YAML-path writer. `disabled` still permits implicit checks and notices, and it does not disable explicit `arkcli update` or `arkcli update --check`.

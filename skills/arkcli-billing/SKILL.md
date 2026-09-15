@@ -1,6 +1,6 @@
 ---
 name: arkcli-billing
-version: 1.1.1
+version: 1.1.2
 description: "Query BytePlus ModelArk split-bill details (settlement amount and token usage billing), with support for filtering by dimensions such as billing month, month range, Endpoint, API key, and product code. Use this when users ask about bills, how much they spent, reconciliation, billing periods, split billing by EP / API key, split billing by product, monthly bills, or billing details. Note that billing is different from usage stats: stats returns inference volume (near real time), while billing returns settlement amounts (billed at T+1, from a finance perspective)."
 metadata:
   requires:
@@ -54,7 +54,7 @@ To see "how many tokens were used" → [`arkcli-usage`](../arkcli-usage/SKILL.md
 
 Use the same approach as [`arkcli-usage` Step 0](../arkcli-usage/SKILL.md) (canonical principle) — **check "the plan bill for my profile tier" first, then check the endpoint bill**. Before checking any "**I**… spent" question, you must:
 
-1. **Probe profile.type**: run `arkcli profile show --format json` and read `type`.
+1. **Probe profile.type**: run `arkcli auth whoami --format json` and read `profile.type` from the persisted Profile summary. `profile show/list/keys list` can synchronize remote keys and write back the local key inventory or default key, so they are not routine Billing admission. If the summary lacks the field, report it as unknown; do not switch Profile, Key, default, or billing lane.
 2. **Determine modality**: if the user names a model/modality → check only that modality; if not → cover all modalities.
 3. **Route by (type × modality)** (`①→②` = plan bill first, then endpoint bill; a single cell = check only the endpoint bill):
 

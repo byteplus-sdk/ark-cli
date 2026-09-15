@@ -257,7 +257,7 @@ explicit confirmation before running it.
 |---|---|---|
 | Parent command cannot prompt | No interactive TTY is available. | Use `arkcli helper configure <harness> ...`. |
 | Login or session error | The selected operation needs a valid BytePlus identity. | Run `arkcli auth login`, then retry. |
-| Unsupported profile type | Helper accepts only Platform, Coding Plan, and Coding Plan Team profiles. | Inspect `arkcli profile show` and switch with `arkcli profile use <name>`. |
+| Unsupported profile type | Helper accepts only Platform, Coding Plan, and Coding Plan Team profiles. | Use `arkcli auth whoami --format json` for the current summary. If the user explicitly asks to switch, explain that Profile reads may synchronize remote keys and write back local key state before entering the `arkcli-profile` workflow. |
 | Missing stored plan API key | The selected plan profile cannot provide credentials to the client. | Run `arkcli auth apikey` or `arkcli profile keys refresh`. |
 | No user-owned Endpoint | No eligible Endpoint belongs to the current sub-user. | Run `arkcli infer endpoint create`. |
 | Endpoint is not Running | The selected Endpoint cannot serve requests. | Run `arkcli infer endpoint start <endpoint-id>`. |

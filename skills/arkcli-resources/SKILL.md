@@ -1,6 +1,6 @@
 ---
 name: arkcli-resources
-version: 1.1.0
+version: 1.1.2
 description: "arkcli resources real-time control-plane queries: list resources and resolve an Endpoint into its authoritative bound model identity, base-model lineage, capabilities, workflows, and Region. Read-only; does not write profile.yaml."
 metadata:
   requires:
@@ -19,9 +19,11 @@ metadata:
 - After handing off to the Deploy Skill, perform only read-only checks, then restate the model, name, Region, configuration, and billing impact. Until the user gives a fresh explicit confirmation in the current turn, **you must not execute the real** `arkcli +deploy`. Never add `--yes`, pipe `echo Y`, or set `ARKCLI_ALLOW_HEADLESS_ACTIVATION` on the user's behalf.
 - Only when the user explicitly asks for raw CRUD, an exact CreateEndpoint request, or a CI/script preview should you route to [`../arkcli-infer-endpoint/SKILL.md`](../arkcli-infer-endpoint/SKILL.md) and use the leaf command `arkcli infer endpoint create ... --dry-run`. A real execution still requires a new confirmation after the preview.
 - `arkcli resources list` is a read-only, real-time control-plane query. It calls the upstream service every time and has no local cache.
+- It is a discovery list, filtered by project, creator, and modality where applicable. An empty list or a missing current default does not prove that an Endpoint is absent or unusable.
+- `invocable` and `required_overrides` describe Profile/resource compatibility; `invocable=true` does not prove that the API key is usable, unexpired, authorized, or has remaining quota. Confirm credential context separately and respect the actual data-plane result.
 - `arkcli resources resolve <ep-id>` checks `endpoint_model_type` before interpreting model references. For a Custom Model Endpoint, `model_id` and `custom_model_id` remain the bound `cm-...` identity; `base_model_*` is lineage and capability metadata only.
 - Dispatch follows profile.Type: platform → `ListEndpoints`; coding-plan → the corresponding plan API.
-- **The team edition `coding-plan-team` behaves the same as the corresponding personal edition**: coding-plan-team ≈ coding-plan (it includes text-generation models, while `--modality image|video` uses the platform endpoint pool). Resource dispatch, base_url, and model lists are identical to the personal edition; only the credentials come from a team seat.
+- `coding-plan-team` uses its team-seat key for plan text models. Image/video discovery uses the platform Endpoint pool, but invocation requires a compatible pay-as-you-go API key; a visible Endpoint does not make the seat key compatible.
 - This skill does not change defaults. When the user wants to change a default, use `profile set-default` from [`../arkcli-profile/SKILL.md`](../arkcli-profile/SKILL.md).
 - `--profile X` genuinely switches identity (P0-A correction): the control-plane request uses X's token / UserID, rather than making the request as active=A and merely displaying B's resources.
 
@@ -44,22 +46,23 @@ metadata:
 
 | Dimension | `arkcli resources list` | `arkcli models ...` |
 |------|------------------------|----------------------|
-| Scope | "What can I use" under the current profile | Full-platform foundation model catalog |
+| Scope | Resource discovery and compatibility under the current profile | Full-platform foundation model catalog |
 | Output | Endpoint ID (`ep-xxx`) or plan model name | All foundation_model fields + ArkModels enrichment |
 | Dispatch | Switches endpoint / plan / coding APIs by profile.type | General ListFoundationModel |
 | Cache | None | Cache scoped by profile/region/project |
-| Primary purpose | Set defaults and verify whether `--model <id>` is active | Find models, compare models, and verify capabilities |
+| Primary purpose | Discover candidates and check Profile/resource compatibility | Find models, compare models, and verify capabilities |
 
-In short, `resources list` answers **"What can I (the current profile) use?"**, while `models` answers **"What is available on the platform?"**
+In short, `resources list` discovers resources and compatibility under the current profile; `models` describes the platform catalog. Neither proves a successful data-plane invocation.
 
 ## Agent quick execution order
 
 1. If the user supplies an `ep-...` ID → `arkcli resources resolve <ep-id> --format json`; inspect `endpoint_model_type` and `model_id` before workflow fields.
-2. If the current profile is uncertain → `arkcli profile show --format json` (inspect `type`).
+2. If the current profile is uncertain → `arkcli auth whoami --format json` (inspect `profile.name` and `profile.type`). Do not use `profile show/list` as routine read-only admission: they may reconcile and update the local key inventory. Missing identity fields require diagnosis, not an assumed profile.
 3. Text resources → `arkcli resources list --modality text --format json`.
 4. Image / video resources → `arkcli resources list --modality image --format json` / `--modality video`.
 5. Compare multiple profiles → run `--profile A --modality text` and `--profile B --modality text` separately.
 6. In the output, `is_default: true` marks the current profile's default. To switch the default, use `arkcli profile set-default`.
+7. If the user-selected or current default Endpoint is absent from discovery, resolve that same Endpoint under the same identity. Check its Region, Running status, intended workflow/API/modalities, and resolution warnings; separately verify the Profile/key lane. Do not bypass an explicit incompatible entry or required override. You must not create an Endpoint merely because a discovery list is empty, or silently change the model, Profile, or default.
 
 ## Command overview
 
@@ -96,13 +99,13 @@ In short, `resources list` answers **"What can I (the current profile) use?"**, 
 
 ## Common errors
 
-- Under a coding-plan profile, `resources list --modality image|video` no longer fails fast (S10): it uses the platform control-plane `ListEndpoints` to list endpoint IDs already created with `+deploy` under the same account. The user can pass them to `+gen --model <ep-id>` or `profile set-default --modality image <ep-id>`. An empty list means the user has not deployed an endpoint on platform; first run `arkcli +deploy <model>`.
+- Under a coding-plan profile, image/video discovery uses the platform Endpoint pool. Check the pay-as-you-go key requirement before invoking an Endpoint. An empty list requires scope/permission diagnosis and exact resolution of a known target; creation is a separate user intent owned by Deploy Skill.
 - `coding-plan resources list: missing AccountID (run arkcli auth login first)` → Only the text path requires AccountID. SSO is not logged in, or claims.Sub is empty while parsing the token; run `arkcli auth login` again.
 - `ListEndpoints: NotLogin / Unauthorized` → Login state/STS expired, or profile X supplied through `--profile X` has no token in the identity store; run `auth login` first.
-- `unsupported profile type "X" for resources list` → profile.yaml was manually changed to an unrecognized type. Use `profile show` to inspect the `type` field, and recreate it with `profile create` if necessary.
+- `unsupported profile type "X" for resources list` → inspect the effective context with `auth whoami`, then route to Config/Profile Skill for diagnosis. Do not recreate or change the profile without user intent.
 
 ## References
 
 - [`../arkcli-profile/SKILL.md`](../arkcli-profile/SKILL.md) — Use this after reviewing resources when you need to change a default.
 - [`../arkcli-models/SKILL.md`](../arkcli-models/SKILL.md) — Use this to find models or compare capabilities.
-- [`../arkcli-deploy/SKILL.md`](../arkcli-deploy/SKILL.md) — Enter the creation workflow when the desired endpoint is not listed.
+- [`../arkcli-deploy/SKILL.md`](../arkcli-deploy/SKILL.md) — Enter the creation workflow only when the user requests a new Endpoint.

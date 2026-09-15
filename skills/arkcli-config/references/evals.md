@@ -13,8 +13,10 @@ User request:
 Expected behavior:
 
 - Route to `arkcli-config`.
-- Start with `arkcli profile show --format json` and, when needed,
-  `arkcli profile list --format json`.
+- Start with `arkcli auth status --format json` and `arkcli auth whoami --format json`;
+  follow the Resources Skill for Chat/Gen defaults and routing.
+- `profile show/list/keys list` may synchronize and write back keys. Do not use
+  them for routine admission or a no-configuration/key-change request.
 - Explain `--base-url > ARK_BASE_URL > profile > derived/default`.
 - Inspect relevant invocation flags and environment variable presence without
   printing secret values.
@@ -30,8 +32,16 @@ Expected behavior:
 
 - State the complete order:
   `--profile > ARK_PROFILE > default_profile > first platform profile > "default"`.
-- Use structured `profile show/list` output for confirmation.
+- Use the current invocation and masked `auth whoami` context as evidence;
+  distinguish persisted Profile values from unverified temporary overrides.
 - Do not read `$HOME/.arkcli-bp/config.yaml` directly.
+
+Composition regression: "What is my current default chat model, and can I use it?
+Only inspect; do not send requests or change configuration or keys."
+Require actual shared/Config/Resources Skill loading and context/default queries,
+no key-reconciling Profile commands and no Chat/Gen execution. The answer must
+separate known routing compatibility from untested key usability, permission,
+quota and actual inference. Score evidence and actions, not fixed answer phrases.
 
 ## 3. Anti-trigger: authentication failure
 
@@ -115,7 +125,7 @@ Verify that:
 - `config reset --dry-run` fails as an unknown flag;
 - deprecated profile-management commands are not recommended;
 - `profile create --help` lists only BytePlus-supported profile types;
-- reset preview is structured and does not remove files.
+- help-only inspection does not remove files; never invent a reset preview flag.
 
 ## 9. Persisted update mode
 

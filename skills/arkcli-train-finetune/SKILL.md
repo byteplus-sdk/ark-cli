@@ -1,6 +1,6 @@
 ---
 name: arkcli-train-finetune
-description: Create, query, and manage model fine-tuning jobs in BytePlus ModelArk with ArkCLI. Use this skill for every request that names a fine-tuning job ID (`mcj-*`), including not-found diagnosis, logs, rollout trajectory, status, or lifecycle operations. Also use it for fine-tuning capability, pricing, configuration, job creation, metrics, artifact export, and deployment handoff. This skill does not manage datasets.
+description: Create, query, and manage model fine-tuning jobs in BytePlus ModelArk with ArkCLI. Use this skill for every request that names a fine-tuning job ID (`mcj-*`), including not-found diagnosis, logs, rollout trajectory, status, or lifecycle operations. Also use it for fine-tuning capability, pricing, configuration, resource-group matching, job creation, metrics, artifact export, and deployment handoff. This skill does not manage datasets.
 ---
 
 # ArkCLI Fine-Tuning for BytePlus ModelArk
@@ -75,6 +75,7 @@ BytePlus currently does not support the fine-tuning SDK. If the user requests a 
 - For manual pagination, `train finetune list --page-number` must be `>=1` and `--page-size` must be within `1-100`. For page 2 or later, a page beyond the filtered `total_count` is a parameter error; do not treat it as a valid empty page.
 - When both `train finetune metrics --from-step` and `--to-step` are present, `to-step` must be strictly greater than `from-step`. Stop on an invalid interval before querying metric names or curves.
 - `train finetune pricing --billing-method token` queries token charge items. `instance` requires the exact `--model-version` and `--type`, with hyperparameters kept consistent with job creation. Treat the hourly range as complete only when `price_complete=true`; otherwise report `missing_flavor_ids`.
+- Before using stable resources, run `train finetune resource-group list` with exactly the same model, version, customization type, and hyperparameters as create. Pass a resource-group ID to `create --resource-group` only when `allowed=true` and that item has `matched=true`; treat the ID as opaque and pass it exactly as returned. When several groups match, let the user choose.
 
 ## Guard Checklist and General Execution Rules
 

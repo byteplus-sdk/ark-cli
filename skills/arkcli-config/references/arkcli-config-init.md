@@ -74,13 +74,16 @@ project slice without adding a project override to a business command.
 ## Credentials
 
 Do not place API keys directly into generated shell history unless the user
-explicitly requests an inline key. Prefer the authenticated BytePlus identity
-and profile key selection:
+explicitly requests an inline key. For routine admission, prefer the masked
+authenticated BytePlus identity summary:
 
 ```bash
-arkcli auth status --format json
-arkcli profile keys list --format json
+arkcli auth whoami --format json
 ```
+
+Use `arkcli profile keys list --format json` only for explicit Profile key
+management after warning that it may synchronize remote keys and write back the
+local key inventory or default key.
 
 Never read or edit files under `$HOME/.arkcli-bp/` to change a project or API
 key.

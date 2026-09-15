@@ -4,7 +4,21 @@ Profile operations belong to `arkcli profile`. The `arkcli config` group now
 owns global UI language, the allowlisted `update.mode` policy, full
 configuration reset, and compatibility for legacy scripts.
 
-## Read-only inspection
+## Routine admission
+
+Use `arkcli auth status --format json` and `arkcli auth whoami --format json`
+for the masked current identity/Profile. Use `arkcli resources list --modality
+text --format json` for the current chat default and follow the Resources Skill
+for compatibility checks. These summaries do not prove a data-plane request
+will succeed; report missing evidence instead of inferring key validity.
+
+## Explicit Profile inspection and management
+
+`profile show/list/keys list` may synchronize remote keys and write back the
+local key inventory, clear an invalid key, or select another default key.
+Explain that impact before using them for an explicit Profile task. Do not use
+them for routine Chat/Gen admission or a no-configuration/key-change request,
+and do not bypass that boundary with deprecated `config show/list`.
 
 ```bash
 # Show the effective active profile
@@ -17,7 +31,7 @@ arkcli profile show <profile-name> --format json
 arkcli profile list --format json
 ```
 
-Structured profile output masks secrets. Use it instead of reading
+Structured profile output masks secrets but is not side-effect-free. Do not read
 `$HOME/.arkcli-bp/config.yaml`.
 
 ## Profile writes

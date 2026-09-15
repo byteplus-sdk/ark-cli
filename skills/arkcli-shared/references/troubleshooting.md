@@ -14,8 +14,12 @@ classified.
    - missing external dependency or permission.
 2. For authentication failures, run `arkcli auth status --format json` and use
    the `arkcli-auth` Skill.
-3. For profile, Region, project, API key, or base URL confusion, compare
-   effective runtime status with `arkcli profile show --format json`.
+3. For profile, Region, project, API key, or base URL confusion, use
+   `arkcli auth whoami --format json` for the current identity/Profile summary
+   and `arkcli resources list --format json` for defaults and routing. Use
+   `profile show/list/keys list` only for an explicit Profile-management task
+   after warning that they may synchronize remote keys and write back the local
+   key inventory or default key.
 4. For an unknown resource identifier, use the corresponding list or search
    command instead of guessing.
 5. If the product command does not cover the task, inspect the installed

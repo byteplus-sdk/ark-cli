@@ -1,6 +1,6 @@
 ---
 name: arkcli-usage
-version: 1.3.2
+version: 1.3.3
 description: "ARK usage queries: `usage stats` (tokens/requests, 5–30 minute delay), `usage plan` / `usage balance --type plan` (plan quota snapshots), `usage balance` (free quota/media asset/plan balances), and `usage seats --with-usage` (team usage by seat). Trigger for usage, consumed amount, remaining quota, plan percentage, in-plan/out-of-plan, or per-seat consumption. Seat listing/binding/assignment is management and routes to arkcli-plans; this skill answers usage only. Verb routing: use/consume/how much → here; list/bind/assign → arkcli-plans. Anti-trigger: TTS/ASR/voice model usage is unsupported."
 metadata:
   requires:
@@ -36,7 +36,7 @@ metadata:
 
 **Core principle: query the plan bucket for "my profile tier" first, then the endpoint bucket.** `profile.type` determines the tier; modality determines whether the plan covers it.
 
-1. **Inspect profile.type**: `arkcli profile show --format json`; read `type` (`platform` / `coding-plan` / `coding-plan-team`).
+1. **Inspect profile.type**: run `arkcli auth whoami --format json` and read `profile.type` (`platform` / `coding-plan` / `coding-plan-team`) from the persisted Profile summary. `profile show/list/keys list` can synchronize remote keys and write back the local key inventory or default key, so they are not routine Usage admission. If the summary lacks the field, report it as unknown; do not switch Profile, Key, default, or billing lane.
 2. **Determine modality**: if the user names a model/modality, query only it; otherwise cover all modalities (text / image / video according to the table).
 3. **Route by (type × modality)** (`①→②` means plan bucket first, endpoint bucket second; one cell means endpoint only):
 

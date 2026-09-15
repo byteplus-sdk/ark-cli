@@ -38,7 +38,7 @@ With `--text-strict`, the CLI also enforces the response contract locally:
 ```bash
 arkcli +chat "What color are strawberries? Answer in JSON" --model ep-xxx \
   --text-format json_object
-# {"color":"red"}
+# The CLI returns an envelope; its .content string may contain {"color":"red"}.
 ```
 
 ### json_schema (strongly constrained shape)
@@ -57,7 +57,7 @@ JSON
 
 arkcli +chat "What color are strawberries? Provide the color name and hex" --model ep-xxx \
   --text-format json_schema --text-schema schema.json --text-strict
-# {"color":"red","hex":"#FF3333"}
+# The CLI returns an envelope; its .content string may contain {"color":"red","hex":"#FF3333"}.
 ```
 
 ### Multi-turn continuation + json_schema
@@ -87,6 +87,41 @@ In non-streaming mode (when `+chat ...` does not include `--stream`), `Responses
 ```
 
 `text_format` is the format actually applied by the server, and you can also retrieve it with `chat get $RID` (autotest jsonschema_test asserts this parameter when running chat get).
+
+## Save the structured body
+
+`--text-format` constrains the model body; it does not remove the CLI envelope.
+Deliver the original `.content`, not the envelope, reasoning, or an answer
+rewritten by the Agent.
+
+Before invoking, resolve the admitted `MODEL`, the user's `PROMPT`, the matching
+`schema.json`, and the delivery path. This non-streaming strict example assumes
+the user requested a new `result.json`. If it already exists, resolve the path
+or overwrite intent before incurring usage. Add other verified parameters as
+requested and retain the admitted profile context.
+
+```bash
+test ! -e result.json && test ! -L result.json &&
+chat_response_file="$(mktemp ./arkcli-chat-response.XXXXXX)" &&
+arkcli +chat --model "$MODEL" --format json \
+  --text-format json_schema --text-schema schema.json --text-strict \
+  "$PROMPT" > "$chat_response_file" &&
+(set -C; jq -ej 'select(.status == "completed") | .content | select(type == "string" and length > 0)' \
+  "$chat_response_file" > result.json) &&
+jq empty result.json
+```
+
+This makes one model request. `jq -j` preserves the original body without adding
+a newline. The last command checks JSON syntax without rewriting whitespace or
+large integers. Local `set -C` prevents overwriting a file or symlink created
+during the request without changing the parent shell. The CLI still enforces
+schema and completion; a failed step must not be reported as successful delivery.
+Plain-text delivery does not require JSON syntax validation.
+If local extraction or writing fails, retain the captured response and repair
+only the local step; do not invoke the model again just to save the answer.
+Read `.id` or `.usage` from that file too, without enabling `--store` or calling
+`chat get` merely for local backup. Explicit continuation or regeneration is a
+separate request, not prohibited by this saving workflow.
 
 ## Common errors
 

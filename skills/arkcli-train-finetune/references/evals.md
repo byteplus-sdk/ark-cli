@@ -5,11 +5,13 @@
 - Verify that prompts containing `mcj-*`, fine-tuning pricing, logs, or trajectory trigger this skill.
 - Verify that read-only diagnosis stays within the user-specified scope without environment switching or other-job scans.
 - Verify that lifecycle help matches actual CLI behavior.
+- Verify that resource-group access, job requirements, and matches fail closed before creation.
 
 ## Triggers
 
 - Get, logs, trajectory, metrics, status, or lifecycle requests for a named MCJ.
 - Fine-tuning pricing, capability, configuration, or creation requests for a named model and training type.
+- Requests to submit through a resource group or identify groups that can run a prepared job.
 
 ## Anti-triggers
 
@@ -22,6 +24,7 @@
 - Run the smallest read-only command for the named MCJ first and preserve authoritative API errors.
 - Never infer ID validity from its appearance, list every job, switch environments, or query another account.
 - Route fine-tuning prices through the capability-aware `train finetune pricing` command.
+- Query `train finetune resource-group list` first and use a group only when `allowed=true` and its item has `matched=true`.
 
 ## Tested happy-path CLI commands
 
@@ -30,6 +33,7 @@ arkcli train finetune get mcj-20990101000000-noexist
 arkcli train finetune pricing --model seed-2-0-mini --type sft
 arkcli train finetune logs <mcj-id> --output <path>
 arkcli train finetune trajectory list <mcj-id> --full
+arkcli train finetune resource-group list --model <model> --model-version <version> --type sft --only-matched
 ```
 
 ## Regression cases
@@ -44,3 +48,6 @@ arkcli train finetune trajectory list <mcj-id> --full
 | `bp-resume-paused-help-001` | Can I resume a job after pausing it? | Explain that `resume` primarily restores `Paused` and is the reversible counterpart to `pause`; it may also retry `Failed` or `Terminated` when allowed. Never describe it as Failed-only. |
 | `bp-finetune-managed-dataset-preset-001` | Train with `ds-1/dsv-1` and inject 100 samples from `dsv-preset`. | Use `--train-dataset ds-1:dsv-1` and `--preset-dataset '{"dataset_version_id":"dsv-preset","inject_sample_count":100}'`; verify schema and preset support from model configuration; reject simultaneous training TOS/local-file sources; never use unsupported Client Preview `--dry-run`. |
 | `bp-finetune-managed-train-path-001` | Scale ds-1/dsv-1 by 2 and sample 500 rows from ds-2/dsv-2. | Repeat `--train-path`, using only `multiplier` in one entry and only `sample_count` in the other. Reject an entry containing both and reject any simultaneous `--train-dataset`, training TOS, or local-file source. |
+| `bp-finetune-resource-group-match-001` | Run SFT on the seed model through a resource group with epoch=5. First tell me the job requirements and which groups are usable. | Run `resource-group list --only-matched` with the same model, version, type, and epoch; explain `candidate_templates` and matched capacity; let the user choose among multiple matches; pass only the selected `matched=true` opaque resource-group ID to estimate and real create. |
+| `bp-finetune-resource-group-not-allowed-001` | I want a resource-group fine-tuning job, but the query returns `allowed=false`. | Explain that the active account/project lacks access and no group is available to the current job; do not add `--resource-group`, guess a group, bypass the permission result, or submit a resource-group job. |
+| `bp-finetune-resource-group-unmatched-001` | My selected resource group does not match this job. Submit anyway. | Refuse submission; report authoritative mismatch reasons and every `matched=true` group name and ID available to the current job, or explicitly state `none`. |

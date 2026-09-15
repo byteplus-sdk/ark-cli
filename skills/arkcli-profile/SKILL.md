@@ -1,6 +1,6 @@
 ---
 name: arkcli-profile
-version: 0.2.0
+version: 0.2.1
 description: "Manage product-isolated BytePlus profiles: inspect and select profiles, create supported profile types, re-select project scope, synchronize API keys and Coding Plan models, and choose default resources."
 metadata:
   requires:
@@ -13,8 +13,11 @@ metadata:
 Read [`../arkcli-shared/SKILL.md`](../arkcli-shared/SKILL.md) before using this
 Skill.
 The entire profile domain manages local identity state and rejects
-`--dry-run`; inspect with `show/list` and obtain explicit confirmation for
-mutations.
+`--dry-run`. Use `auth status/whoami` for ordinary admission and `resources`
+for resource/default discovery. Reserve `profile show/list/keys list` for an
+explicit Profile task: explain first that these commands can synchronize
+remote keys and write back the local key inventory or default key. Obtain
+explicit confirmation for mutations.
 
 A profile is a local BytePlus configuration slice that binds a profile type,
 the fixed BytePlus Region, project scope, identity, API keys, and default
@@ -116,20 +119,29 @@ positional project name, it loads the selectable BytePlus projects and includes
 
 ## Guard Checklist
 
-1. Start uncertain profile work with:
+1. For ordinary admission, do not inspect or change Profile state. Use:
+
+   ```bash
+   arkcli auth status --format json
+   arkcli auth whoami --format json
+   arkcli resources list --modality text --format json
+   ```
+
+2. When the user explicitly asks to inspect or manage Profile state, explain
+   the possible key synchronization and writeback before running:
 
    ```bash
    arkcli profile show --format json
    arkcli profile list --format json
    ```
 
-2. Before `create`, `delete`, or `project`, state the exact local configuration
+3. Before `create`, `delete`, or `project`, state the exact local configuration
    impact and obtain confirmation.
-3. Before `use`, `rename`, `keys use`, `keys refresh`, `models refresh`, or
+4. Before `use`, `rename`, `keys use`, `keys refresh`, `models refresh`, or
    `set-default`, state the target profile.
-4. Use `--plan-tier lite|pro` only for a personal `coding-plan` profile when
+5. Use `--plan-tier lite|pro` only for a personal `coding-plan` profile when
    the user explicitly needs to override subscription detection.
-5. Do not edit `~/.arkcli-bp/` or `config.yaml` directly.
+6. Do not edit `~/.arkcli-bp/` or `config.yaml` directly.
 
 ## References
 

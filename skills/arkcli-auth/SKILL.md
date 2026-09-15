@@ -43,8 +43,10 @@ Load command details only when needed:
 
 Do not use this Skill to decide whether a model, Endpoint, or business feature
 is supported. Route those questions to the matching BytePlus capability Skill.
-Do not run `auth apikey` when the user only wants a read-only key inventory; use
-`arkcli profile keys list`.
+Do not run `auth apikey` when the user explicitly asks to inspect the key
+inventory. Before using `arkcli profile keys list`, explain that it may synchronize
+remote keys and write back the local key inventory or default key;
+masked output does not make the Profile operation side-effect free.
 
 ## Execution order
 
@@ -115,7 +117,11 @@ active key. Do not run it when the user only wants to list keys.
 
 - Inspect the current selected key through the masked `ark_api_key` field in
   `arkcli auth status --format json`.
-- Use profile key list commands for read-only inventory.
+- Use `arkcli profile keys list` only for an explicit Profile-management
+  request. Before the command, explain that it can query the remote key source,
+  reconcile live keys, write back the local inventory, and select or clear the
+  stored default when membership changes. Masked output does not make it
+  read-only.
 - Never print a complete API key.
 - Do not confuse an ARK API key used by data-plane calls with the SSO/STS
   credentials used by control-plane calls.

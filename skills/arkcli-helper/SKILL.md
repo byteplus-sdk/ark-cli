@@ -1,6 +1,6 @@
 ---
 name: arkcli-helper
-version: 0.1.1
+version: 0.1.2
 description: "Configure an IDE, editor, or supported local coding agent for BytePlus Platform, Coding Plan, or Coding Plan Team: use arkcli helper configure to connect Claude Code, Codex, OpenCode, OpenClaw, Hermes, Pi, or ZCode to a model/provider or Endpoint, helper list to inspect support, and helper reset for safe rollback. Prefer arkcli-helper over arkcli-auth or arkcli-config when the user's goal is wiring a model into a local coding client, even if profile or API-key setup is also mentioned. MCP injection and unsupported clients are outside the BytePlus Helper surface."
 metadata:
   requires:
@@ -85,6 +85,12 @@ plane and stays in sync with the console.
 | `arkcli helper reset <harness>` | Non-interactive write | Remove only arkcli-managed model/provider configuration and preserve unrelated settings. |
 
 ## Execution Order
+
+Routine Helper admission starts with `arkcli helper list` and the user-selected
+target. Do not run `profile show/list/keys list` merely to fill in context:
+these commands can synchronize remote keys and write back the local key
+inventory or default key. Use them only for an explicit Profile task after
+explaining that impact.
 
 1. Run `arkcli helper list` and the relevant `--help` command first.
 2. Determine the exact harness, profile type, profile name, and model or
