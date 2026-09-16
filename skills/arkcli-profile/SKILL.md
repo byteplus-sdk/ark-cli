@@ -113,7 +113,7 @@ positional project name, it loads the selectable BytePlus projects and includes
 | `arkcli profile delete <profile>` | Delete a local profile; use `--yes` only after confirmation. |
 | `arkcli profile rename <profile> --to <display-name>` | Change only the display label, not the internal profile key. |
 | `arkcli profile project [<project-name>]` | Replace the Platform project slice and refresh Coding Plan profiles. |
-| `arkcli profile keys list|use|refresh` | Inspect, select, or synchronize profile API keys. |
+| `arkcli profile keys list|use|refresh` | Inspect, select, or synchronize the profile-specific ordinary or team-seat API key source; an empty refresh fails without clearing local keys. |
 | `arkcli profile models list|refresh` | Inspect or refresh Coding Plan model defaults. |
 | `arkcli profile set-default <id>` | Save a default resource for one modality. |
 
@@ -142,6 +142,10 @@ positional project name, it loads the selectable BytePlus projects and includes
 5. Use `--plan-tier lite|pro` only for a personal `coding-plan` profile when
    the user explicitly needs to override subscription detection.
 6. Do not edit `~/.arkcli-bp/` or `config.yaml` directly.
+7. Treat API-key sources as profile-specific: `platform` and personal
+   `coding-plan` use the ordinary pool; `coding-plan-team` uses a Running
+   seat's key. `auth apikey` only selects from the ordinary pool and cannot
+   repair a team profile.
 
 ## References
 

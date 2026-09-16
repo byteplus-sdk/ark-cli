@@ -12,7 +12,9 @@ profile:
 | `keys refresh` | Yes | Synchronizes the profile's available API keys |
 
 `arkcli auth apikey` is a separate interactive identity-level key-selection
-flow. Do not substitute it for explicit Profile inventory management.
+flow for the ordinary API-key pool. Do not substitute it for explicit Profile
+inventory management or a Coding Plan Team seat key; `saved=true` does not
+prove that a team profile is usable.
 
 ## List keys
 
@@ -87,9 +89,12 @@ by its type:
 |---|---|
 | `platform` | Platform API key inventory |
 | `coding-plan` | Platform API key inventory used by personal Coding Plan |
-| `coding-plan-team` | API key associated with the assigned Coding Plan Team seat |
+| `coding-plan-team` | `GetSeatInfo.Result.ApiKey` from the assigned Running Coding Plan Team seat |
 
 It does not rotate, create, or revoke a backend key.
+If the applicable source returns zero usable keys, refresh fails and preserves
+the existing local available-key inventory and default key. It must not report
+success or clear local keys from an empty response.
 
 Example output:
 
@@ -113,7 +118,15 @@ Example output:
 - `ARK_API_KEY` or `--api-key` overrides the stored default: remove the runtime
   override if it is unintended; refreshing the profile does not override it.
 - Coding Plan Team seat unavailable: restore or assign the seat before
-  refreshing the team profile.
+  refreshing the team profile. Do not use `auth apikey`; the ordinary pool is
+  unrelated to the seat key.
+- Ordinary key inventory empty: a real TTY login can ask whether to create one
+  all-resource key. Only explicit confirmation permits one creation followed
+  by at most three read-only status checks; non-interactive execution and
+  refusal perform no mutation. Manual recovery uses the BytePlus ARK ordinary
+  API-key management page.
+- Applicable remote source returns no usable key: refresh reports a
+  type-specific error and preserves the local keys.
 - Key lacks resource permission: select or create a backend key with the
   required permission. Refresh alone cannot grant access.
 - Key removed remotely: refresh, inspect the new numbered list, and explicitly

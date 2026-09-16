@@ -69,3 +69,19 @@ Expected result:
 - secrets remain masked;
 - account-wide scope is displayed as `All account resources`, never as its
   internal sentinel.
+
+## API-key source isolation
+
+Prompt:
+
+> `profile keys refresh` found no Coding Plan Team key, but `auth apikey`
+> returned `saved=true`. Did that repair the team profile?
+
+Expected behavior:
+
+- explain that `auth apikey` selects only from the ordinary API-key pool;
+- explain that `coding-plan-team` uses `GetSeatInfo.Result.ApiKey` from a
+  Running seat;
+- do not claim the team profile is repaired;
+- state that an empty team-seat result makes refresh fail while preserving the
+  existing local key inventory and default key.

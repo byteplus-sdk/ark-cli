@@ -48,6 +48,27 @@ Use this recovery sequence:
 key or grant access. Use the BytePlus Coding Plan references for explicit key
 rotation or team-seat management.
 
+Key sources and empty-result handling are profile-specific:
+
+- `platform` and personal `coding-plan` use ordinary `ListApiKeys` followed by
+  `GetRawApiKey` for Active entries. In a real TTY login, an empty pool may be
+  created only after explicit confirmation, with one mutation and at most
+  three read-only status checks.
+- An explicitly requested ordinary key may be created with
+  `arkcli auth apikey create`. A non-interactive caller may add `--yes` only
+  after explicit user authorization. The command creates once, verifies with
+  at most three status reads, saves the key for the current identity, and never
+  prints its raw value. Use `profile keys refresh/use` to change an existing
+  Profile's default key.
+- `coding-plan-team` uses `GetSeatInfo.Result.ApiKey` from a Running seat. It is
+  unrelated to the ordinary pool and cannot be repaired with `auth apikey`.
+- If `profile keys refresh` receives zero usable keys from the relevant source,
+  it fails and preserves the existing local key inventory and default key.
+- `auth apikey` only selects an ordinary key. Its `saved=true` result does not
+  prove that a team-seat key is available.
+- `auth apikey create` also affects only the ordinary pool. It cannot create or
+  repair a `coding-plan-team` seat key.
+
 ## Rules for Agents
 
 - Prefer SSO-derived STS for BytePlus control-plane commands.

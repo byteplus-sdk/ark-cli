@@ -107,12 +107,19 @@ For a plan profile:
   from that profile;
 - the selected profile must contain its stored default API key.
 
-If the stored key is missing, recover with one of:
+If a personal `coding-plan` stored key is missing, refresh its ordinary key
+inventory and, when interactive selection is needed, use:
 
 ```bash
-arkcli auth apikey
 arkcli profile keys refresh
+arkcli auth apikey
 ```
+
+For `coding-plan-team`, the key comes from
+`GetSeatInfo.Result.ApiKey` on a Running seat. `auth apikey` only selects an
+ordinary key and cannot repair the team profile. If the applicable remote
+source returns no usable key, refresh fails and preserves the existing local
+key inventory and default key.
 
 A one-off API key override does not replace the stored profile key used by
 Helper plan configuration.
@@ -258,7 +265,8 @@ explicit confirmation before running it.
 | Parent command cannot prompt | No interactive TTY is available. | Use `arkcli helper configure <harness> ...`. |
 | Login or session error | The selected operation needs a valid BytePlus identity. | Run `arkcli auth login`, then retry. |
 | Unsupported profile type | Helper accepts only Platform, Coding Plan, and Coding Plan Team profiles. | Use `arkcli auth whoami --format json` for the current summary. If the user explicitly asks to switch, explain that Profile reads may synchronize remote keys and write back local key state before entering the `arkcli-profile` workflow. |
-| Missing stored plan API key | The selected plan profile cannot provide credentials to the client. | Run `arkcli auth apikey` or `arkcli profile keys refresh`. |
+| Missing personal Coding Plan API key | The selected personal plan profile has no usable ordinary-pool key. | Run `arkcli profile keys refresh`; use `arkcli auth apikey` only to interactively select an ordinary key. |
+| Missing Coding Plan Team API key | No usable key was returned for a Running team seat. | Restore or assign the seat, then refresh. Do not use `auth apikey`; its ordinary pool is unrelated. |
 | No user-owned Endpoint | No eligible Endpoint belongs to the current sub-user. | Run `arkcli infer endpoint create`. |
 | Endpoint is not Running | The selected Endpoint cannot serve requests. | Run `arkcli infer endpoint start <endpoint-id>`. |
 | Endpoint is filtered out | It is not an eligible text-output Endpoint. | Select or create a Running text-output Endpoint. |

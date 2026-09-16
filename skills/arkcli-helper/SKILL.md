@@ -176,8 +176,10 @@ letters, digits, underscores, or hyphens.
   [`arkcli-auth`](../arkcli-auth/SKILL.md), then retry.
 - Wrong or unsupported profile: inspect and switch with
   [`arkcli-profile`](../arkcli-profile/SKILL.md).
-- Missing stored API key: run `arkcli auth apikey` or
-  `arkcli profile keys refresh`, then retry.
+- Missing stored API key: first run `arkcli profile keys refresh`. For a
+  personal `coding-plan`, `auth apikey` can select from the ordinary pool; for
+  `coding-plan-team`, the key must come from a Running seat and the ordinary
+  pool cannot repair it. An empty refresh preserves existing local keys.
 - No eligible Platform Endpoint: create one with
   `arkcli infer endpoint create`; start a stopped one with
   `arkcli infer endpoint start <endpoint-id>`.

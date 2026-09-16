@@ -152,13 +152,18 @@ Prompt:
 Expected behavior:
 
 - Do not use a one-off API key override as a substitute.
-- Route recovery to one of:
+- For a personal `coding-plan`, route recovery to:
 
 ```bash
-arkcli auth apikey
 arkcli profile keys refresh
+arkcli auth apikey
 ```
 
+- For `coding-plan-team`, require a Running seat and use
+  `profile keys refresh`; do not use `auth apikey`, because it only selects the
+  ordinary pool.
+- State that an empty refresh fails without clearing the existing local key
+  inventory or default key.
 - Retry Helper only after the selected profile stores a usable key.
 
 ## 9. Guard: No Eligible Platform Endpoint

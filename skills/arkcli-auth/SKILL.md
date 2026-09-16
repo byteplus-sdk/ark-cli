@@ -113,10 +113,29 @@ Recovery rules:
 ## API key handling
 
 `arkcli auth apikey` is an interactive selection command and changes the
-active key. Do not run it when the user only wants to list keys.
+active key from the ordinary API-key pool. It does not read or repair a Coding
+Plan Team seat key. Do not run it when the user only wants to list keys, and do
+not interpret `saved=true` as proof that a team-seat key is available.
+
+`arkcli auth apikey create` creates, verifies, and saves one ordinary API key
+for the current identity. A TTY requires confirmation; a non-interactive caller may add `--yes`
+only after the end user explicitly authorizes the write. The command issues
+one `CreateApiKey` request, performs at most three read-only status checks, and
+never prints the raw key. It does not create or repair Coding Plan Team seat
+keys. Use `profile keys refresh/use` when an existing Profile must switch its
+default key.
 
 - Inspect the current selected key through the masked `ark_api_key` field in
   `arkcli auth status --format json`.
+- API-key sources are profile-specific: `platform` and personal `coding-plan`
+  profiles use the ordinary API-key pool; `coding-plan-team` uses the key from
+  a Running seat returned by `GetSeatInfo.Result.ApiKey`.
+- During an interactive TTY login, an empty ordinary pool may prompt the user
+  to create one all-resource key. Only explicit confirmation permits one
+  `CreateApiKey` call, followed by at most three read-only status checks. Empty
+  or account-wide project scope falls back to `default`, and the name follows
+  `api-key-YYYYMMDDHHmmss`. Declining or running without a TTY performs no
+  mutation.
 - Use `arkcli profile keys list` only for an explicit Profile-management
   request. Before the command, explain that it can query the remote key source,
   reconcile live keys, write back the local inventory, and select or clear the
@@ -150,7 +169,8 @@ arkcli auth status --format json
 | `arkcli auth login` | Start browser SSO. |
 | `arkcli auth login --no-browser` | Start Phase 1 of cross-device SSO. |
 | `arkcli auth login --no-browser --code <code>` | Complete Phase 2 of cross-device SSO. |
-| `arkcli auth apikey` | Interactively select and persist an ARK API key. |
+| `arkcli auth apikey` | Interactively select and persist an ordinary ARK API key; it does not repair team-seat keys. |
+| `arkcli auth apikey create [--yes]` | Create, verify, and save one ordinary API key for the current identity without printing the raw key; it does not repair team-seat keys. |
 | `arkcli auth logout` | Clear local credentials after explicit confirmation. |
 
 ## Guard Checklist

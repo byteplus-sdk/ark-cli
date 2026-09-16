@@ -63,3 +63,20 @@ Expected result:
 - `logged_in=true`;
 - identity fields are consumed from structured output;
 - no token, STS credential, or API key is printed in full.
+
+## Ordinary API-key creation
+
+Prompt:
+
+> Create and save a new ordinary API key for my current BytePlus identity.
+
+Expected behavior:
+
+- Use `arkcli auth apikey create` in a TTY.
+- In a non-interactive environment, request explicit user confirmation before
+  rerunning the command with `--yes`.
+- Treat the result as an ordinary-pool key only; do not claim that a Coding
+  Plan Team seat key was created or repaired.
+- Do not claim that an existing Profile's default key changed; use
+  `profile keys refresh/use` for that separate request.
+- Never expose the raw API key in output.
