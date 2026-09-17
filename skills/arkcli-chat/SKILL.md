@@ -66,6 +66,17 @@ In short: **If there is an @file and a clear output form → understand; image-b
 - To use an endpoint ID with `+chat`, directly pass `--model ep-xxx` (the endpoint itself already determines the modality, so no extra flag is needed).
 - If authentication fails, switch to [`../arkcli-auth/SKILL.md`](../arkcli-auth/SKILL.md).
 
+## Model capability notices (non-blocking stderr warnings)
+
+Before a real `+chat` request, the CLI reads ArkModels metadata once and may write model-specific notices to **stderr** with a `warn: ` prefix. The request still proceeds:
+
+1. A warning is advisory, not a rejection. Declared values, aliases, and defaults are metadata; the server and SDK decoder remain authoritative.
+2. Do not treat a declared set as the server acceptance set. Never remove an option, switch models, or retry merely because a local warning appeared.
+3. Warn only from metadata that is actually present. Other capabilities do not imply a reasoning-effort catalog; missing or unavailable metadata produces no warning.
+4. Preserve a complete versioned model ID exactly. The CLI may use the bare family name to find that version's metadata, but must not upgrade an explicitly selected older version to the current primary.
+5. Warnings are localized and written only to stderr. The stdout schema, including `--format json`, is unchanged.
+6. `--dry-run` remains offline and does not read ArkModels metadata, so it emits no capability warnings.
+
 ## Command overview
 
 | Command |Description|

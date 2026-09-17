@@ -6,7 +6,14 @@
 - "Query thinking only": support repeated and comma-separated `--key`; do not invent a version flag or substitute model-list results for metadata.
 - "Keep my settings after changing models": query the new model, explain incompatibilities, and neither inject defaults nor add client-side business validation.
 - "Empty metadata or an unknown key": report it without inventing enums; preserve future keys and values without an allowlist.
-- Use the current BytePlus profile without cross-product fallback.
+- Use a verified Platform profile in the current BytePlus product without cross-product fallback.
+
+## Profile type boundary
+
+- The default is a personal/team Coding Plan and the user wants MA: use an explicitly verified Platform profile for this invocation; do not silently change the default, invent profile names, or switch accounts.
+- Only an explicit key is supplied with a plan profile or no profile: use the standard BytePlus MA endpoint, without requiring a URL, inheriting a plan route, or changing saved profiles.
+- An explicit key and URL are supplied with a plan profile: preserve the URL and allow data-plane execution; control-plane steps still require login. Reject a URL without an explicit key. Report server authentication failures without credential fallback. For BytePlus stg, require a verified data-plane URL instead of assuming `--env stg` changes the standard data-plane endpoint.
+- Preview succeeds under a plan profile: report an offline plan only, not execution eligibility. Stop on `managed_agent_profile_required` without replaying writes.
 
 ## Existing Session upgrades
 

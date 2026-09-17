@@ -122,7 +122,7 @@ URL must never reuse a profile API key.
 | `arkcli config lang get` | Show the persisted effective UI locale | Read-only |
 | `arkcli config lang set en_us` | Persist the only locale supported by BytePlus | Writes `config.yaml` |
 | `arkcli config lang unset` | Remove the persisted locale and use the BytePlus build default | Writes `config.yaml` |
-| `arkcli config set update.mode automatic` | Explicitly enable automatic for this exact install; use it again to resume after a manual reinstall | Writes config and exact consent |
+| `arkcli config set update.mode automatic` | Explicitly enable automatic for this exact install; when recovering from non-latest, install latest first | Writes config and exact consent |
 | `arkcli config set update.mode disabled` | Stop silent installation while retaining implicit checks, notices, and manual update commands | Writes `config.yaml` |
 | `arkcli config reset` | Remove both local configuration files after an interactive confirmation | Destructive |
 
@@ -132,29 +132,28 @@ to remove authentication state.
 
 The only public modes are `automatic` and `disabled`. `disabled` retains implicit version checks and update notices but never installs silently; explicit `arkcli update` and `arkcli update --check` also remain available. Missing mode values and legacy persisted `notify` values are presented as `disabled`. Legacy persisted `notify` values continue to read as `disabled`, but never recommend the legacy setter.
 
-The fail-closed Windows, macOS, and Linux transactions and all BytePlus production gates are open. An npm postinstall never creates active mutation consent or updates immediately. Only a stable global npm install that proves `$HOME/.arkcli-bp` did not previously exist creates inert pending evidence for the exact install. First run and environment variables cannot bypass grace or exact consent.
+The fail-closed Windows, macOS, and Linux transactions and all BytePlus production gates are open. A stable global npm postinstall compares the installed version with the registry's current `latest`: non-latest persists `disabled`; current latest preserves the mode and reissues exact-install authorization when the persisted mode is `automatic`. Postinstall never performs an immediate version replacement.
 
 ### Fresh-install enrollment
 
-Only a stable global npm install that can prove `$HOME/.arkcli-bp` did not previously exist defaults to `automatic`. Postinstall creates inert pending evidence bound to the exact install; it never creates active mutation consent.
+Only a stable global npm install that can prove `$HOME/.arkcli-bp` did not previously exist and whose installed version equals registry `latest` defaults to `automatic` with inert pending evidence.
 
-- The first successful human business command reports automatic mode on stderr and completes grace. It does not schedule an update.
-- The second successful human business command activates exact-install consent. It still does not schedule an update.
-- Only the third and later human business commands may schedule an automatic patch update.
+- The first successful eligible human business command completes pending -> grace -> active in one policy transaction.
+- After exact-install consent is revalidated as active, that invocation may schedule an automatic patch update.
 - Every CLI process started by npm `postinstall` (including its `+connect` invocation), and a user-run `+connect`, skips enrollment, implicit version checks, and automatic scheduling.
 - AI Skills, CI, non-TTY invocations, Client Preview, `config`, `update`, and internal maintenance commands neither consume enrollment nor schedule automatic work.
 - A committed update result appears once on stderr after the next successful human business command. It never changes stdout or the business exit code.
 
 Production automatic updates deliberately keep the 24/48/72-hour and 10%/50%/100% cohort admission disabled. The original rollout implementation and regression coverage remain in place, and the online Probe still requires two independent observations. Normal automatic updates still require exact consent, a live registry target/SRI/tarball check, a one-use reservation, backoff, and every staged-apply safety boundary.
 
-A manual npm reinstall, downgrade, changed install identity, or `--ignore-scripts` install suspends automatic mode when exact pending or consent evidence is absent. Never reuse authority from the previous install. The user can resume with `arkcli config set update.mode automatic`. For a persistent version pin, run:
+An npm reinstall never reuses the old exact-install receipt. If the installed version equals current `latest`, the existing mode is unchanged: `automatic` receives a new exact receipt, while `disabled` or legacy `notify` stays off. A non-latest install persists `disabled`. Registry failure leaves the mode unchanged and issues no receipt; `--ignore-scripts` performs no reconciliation. To recover from non-latest, install latest first and then run `arkcli config set update.mode automatic`. For a persistent version pin, run:
 
 ```bash
 arkcli config set update.mode disabled
 npm i @byteplus/ark-cli@<exact-version> -g --registry https://registry.npmjs.org
 ```
 
-On a fresh machine, set `ARKCLI_NO_UPDATE_NOTIFIER=1` on the historical-version install, then persist `disabled`. The policy lives in `$HOME/.arkcli-bp/config.yaml`, outside the npm package tree. `arkcli config reset` attempts to revoke exact consent before clearing configuration and never silently reenrolls the user.
+For a deterministic pin even when the registry is unavailable, set `disabled` before installing the exact version. The policy lives in `$HOME/.arkcli-bp/config.yaml`, outside the npm package tree, and installing `@latest` does not change it back to `automatic`. `arkcli config reset` attempts to revoke exact consent before clearing configuration. A release published between npm resolving `@latest` and postinstall querying the registry can rarely cause a false non-latest classification.
 
 BytePlus rejects `zh_cn` even though the shared command parser recognizes that
 locale for other products.

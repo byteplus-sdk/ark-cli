@@ -74,17 +74,18 @@ silent installation while retaining implicit version checks, notices, and
 explicit `arkcli update` / `arkcli update --check`. Legacy `notify` values in
 persisted configuration remain compatible inputs but are not settable.
 
-After the matching production gate opens, a provably fresh BytePlus stable
-global npm install starts inert enrollment bound to the exact install. The
-first successful human business command only reports and completes grace, the
-second only activates consent, and only later commands may schedule. A manual
-reinstall or downgrade invalidates old authority and suspends automatic mode.
+With the production gates open, a provably fresh BytePlus stable global npm
+install whose version equals registry `latest` starts inert enrollment bound to
+the exact install. The first successful eligible human business command
+completes grace and consent; after active revalidation it may schedule. A
+current-latest reinstall preserves the mode and reissues exact consent only for
+existing `automatic`; a non-latest install persists `disabled`.
 
 For a persistent version pin, set `disabled` before installing the exact
-`@byteplus/ark-cli` version. On a fresh machine, set
-`ARKCLI_NO_UPDATE_NOTIFIER=1` on the historical-version install and then
-persist `disabled`. The policy lives in `$HOME/.arkcli-bp/config.yaml`, outside
-the npm package tree.
+`@byteplus/ark-cli` version. Installing `@latest` does not turn `disabled` back
+into `automatic`; recover by installing latest and then explicitly setting
+automatic. The policy lives in `$HOME/.arkcli-bp/config.yaml`, outside the npm
+package tree.
 
 BytePlus rejects `zh_cn`. `config reset` removes
 `$HOME/.arkcli-bp/config.yaml` and legacy

@@ -73,9 +73,14 @@ Before execution, read the corresponding reference based on the user's intention
 
 ## Authentication and Profiles
 
-- Before business commands, run `arkcli auth status --format json`. If not logged in, SSO expired, or STS refresh failed, handle login first.
-- For data plane Files, Session resources, events, and threads, an ARK API Key is needed. The effective key priority is `--api-key` > `ARK_API_KEY` > the profile's `api_key`; explicit flag or environment overrides do not change the stored profile key.
+- Without an explicit API key, Managed Agent requires a `type=platform` profile; it does not automatically use personal/team plan credentials. A successful login does not establish that the default profile supports Managed Agents.
+- When relying on profile credentials, check the type using `auth status --format json`. If the default is a plan, use a verified `--profile <platform-profile>` for this invocation; do not change the global default with `profile use`. If no Platform profile is available or identity/project is ambiguous, follow the Profile Skill and obtain confirmation instead of guessing a name or switching accounts.
+- Data-plane commands accept `--api-key` or `ARK_API_KEY` even when the selected profile is a plan. Key priority is `--api-key` > `ARK_API_KEY` > the Platform profile's key. The server validates the supplied key and its permissions; stop on authentication failure without switching accounts.
+- Without an explicit URL, MA uses its standard data-plane endpoint for the current product, Region and environment, never the profile's plan or custom route. Key-only data-plane calls also work without a profile. Explicit `--base-url` / `ARK_BASE_URL` wins, but requires an explicit key too; a URL alone cannot replace plan credentials.
+- Control-plane calls still require login credentials. Control-plane-only commands do not accept key/URL overrides, and mixed workflows cannot use an API key instead of login. For control-plane work, inspect `arkcli auth status --format json` and handle expired SSO/STS first. Data-plane-only calls with an explicit key do not require login.
+- Stop on `managed_agent_profile_required` without using Raw API as a workaround. Offline `--dry-run` does not establish execution eligibility. Overrides affect this invocation only, not the default profile or saved key.
 - In online environments, use `--env prod` by default; do not default to `stg`.
+- BytePlus `--env stg` selects the control-plane environment; its built-in data-plane URL remains the standard production endpoint. For stg data-plane testing, require a verified stg URL and matching explicit key. An explicit URL is preserved rather than rewritten by environment selection.
 - Non-interactive SSO logins are two-step: first `arkcli auth login --no-browser` to get a URL; users need to paste the base64 code to complete the login with `arkcli auth login --no-browser --code <code>`.
 
 ## Pagination

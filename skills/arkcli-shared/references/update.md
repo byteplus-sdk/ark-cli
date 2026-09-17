@@ -8,8 +8,8 @@ The reading and writing of `update.mode`, its default, and automatic production
 gates belong to
 [`../../arkcli-config/SKILL.md`](../../arkcli-config/SKILL.md). Never infer
 active automatic consent from a discovered release or postinstall enrollment.
-The config Skill owns fresh-install pending evidence, human-command grace,
-manual-reinstall suspension, and persistent version pins.
+The config Skill owns fresh-install pending evidence, registry-latest
+reconciliation, exact-receipt rotation, and persistent version pins.
 
 Every Agent invocation in this reference must retain the
 `ARKCLI_CALLER_TYPE=ai_agent` metadata below. Besides attribution, it ensures an
@@ -72,9 +72,11 @@ mode. `disabled` stops only silent installation. `disabled` still allows implici
 
 For a persistent version pin, do not only downgrade with npm. Instruct the user
 to persist `arkcli config set update.mode disabled` before installing an exact
-version. On a fresh machine, set `ARKCLI_NO_UPDATE_NOTIFIER=1` on the historical
-version install and then persist `disabled`. Manual reinstall suspends old
-automatic consent; never claim previous authority remains valid.
+version. A reinstall never reuses the old exact receipt: current latest
+preserves the mode and reissues consent for existing `automatic`, while
+non-latest persists `disabled`. Installing `@latest` does not turn `disabled`
+back into `automatic`; recover by installing latest and then explicitly setting
+automatic.
 
 `update` launches npm and is classified as `opaque_external_execution`; it
 does not support `--dry-run`. Do not invent Client Preview or bypass the
