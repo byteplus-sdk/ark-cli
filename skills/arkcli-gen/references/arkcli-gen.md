@@ -114,7 +114,7 @@ arkcli +gen --model ep-20260416234150-zsd4v --modality video "A Shiba Inu is run
 | `--camera-fixed` | No| bool | Video tasks: fix the virtual camera. |
 | `--return-last-frame` | No| bool | Video tasks: return the last-frame URL (for continuation generation). |
 | `--draft` | No| bool | Video task draft mode: faster / cheaper / lower quality. |
-| `--priority` | No| int | Video task scheduling priority 0-9. A higher value means higher priority.**Constrained by supported_params** — check whether the model supports it and the range in step 2 first (tested: seedance-2.0 / 2.0-fast support `[0,9]`, while 1.5-pro does not). If the model does not support it, passing it will be rejected by validation. |
+| `--priority` | No| int | Video task scheduling priority 0-9. A higher value means higher priority.**Constrained by supported_params** — check whether the model supports it and the range in step 2 first (tested: seedance-2.0 / 2.0-fast support `[0,9]`). If the model does not support it, passing it will be rejected by validation. |
 | `--service-tier` | No| string | Video tasks: service tier. |
 | `--safety-id` | No| string | Video tasks: safety identifier passed in by the caller. |
 | `--execution-expires-after` | No| int | Video task server-side TTL (seconds). |

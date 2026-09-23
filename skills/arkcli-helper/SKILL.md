@@ -129,7 +129,10 @@ request
 - ZCode writes model-specific ArkModels metadata to
   `$ZCODE_HOME/v2/config.json`. It preserves `limit.context` exactly and
   normalizes binary-KiB `limit.output` values to the decimal token limit
-  enforced by the gateway. Unknown fields remain omitted. ZCode does not
+  enforced by the gateway. ArkModels authoritative values win; when a model is
+  missing from ArkModels (some third-party Plan models) or a field is zero, a
+  built-in Plan model capability table fills the gap, and only fields still
+  unknown after both steps are omitted. ZCode does not
   hot-reload its provider registry, so fully quit the ZCode process, reopen it,
   and start a new session after configuration.
 - `configure` writes immediately and does not install a missing client.

@@ -1,6 +1,6 @@
 ---
 name: arkcli-gen
-version: 2.0.0
+version: 2.0.1
 description: "Image/video generation entry point: Use arkcli +gen when the user wants to generate an image, draw an image, generate an image/video, generate an image or a video from a reference image, generate from a reference image/video/audio, or explicitly use Seedream/Seedance models to create new content.+gen generates based on the available resources of the current profile and the model supported_params. Images are returned synchronously. After a video is submitted, task_id/status is returned. Use --wait or arkcli gen get/list to poll and download the result."
 metadata:
   requires:
