@@ -38,6 +38,15 @@ arkcli models search --modality text --min-context-window 200000 --capability th
 | `models-search-task-fit` | Help me find a text model that supports thinking and has more than 200K context for +chat. | Use `arkcli models search --min-context-window ... --capability thinking` |
 | `models-search-speech-boundary` | Does the BytePlus ModelArk marketplace have TTS models? Can I deploy one directly? | Use `arkcli models search <tts/voice keyword>` for marketplace discovery; clearly state that voice models currently do not support `+deploy` / usage / pricing / onboard; do not recommend `+chat` or `+gen` |
 
+## Model detail pricing migration cases
+
+| case | prompt | Expected |
+|------|--------|----------|
+| `models-get-dimensional-price` | What is the input price for regular inference on this known model? Are there context tiers? | Read the get reference and use `pricing.prices`; explain service, label, dimensions, and units; never read old charge_items or select the first row |
+| `models-get-missing-price` | Does a null price or empty array mean free? | Distinguish null, empty arrays, and zero; never infer free, inactive, or nonexistent status or fall back to old prices |
+| `models-get-entitlements` | Show the price, activation state, and remaining free quota. | Read new prices from `pricing.prices`, state and quota from existing `pricing.state` / `pricing.inference_free_usage`; do not infer one from the other |
+| `models-get-price-scope` | Is this a price for the specified version and region? | Explain foundation-model-name and global query scope; do not infer version-specific or region-specific rates |
+
 ## Key scoring points
 
 - Must route to `arkcli-models`.

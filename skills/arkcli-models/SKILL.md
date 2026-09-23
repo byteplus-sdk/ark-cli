@@ -1,6 +1,6 @@
 ---
 name: arkcli-models
-version: 1.0.0
+version: 1.0.1
 description: "arkcli model query capability: activate, list, search, and get details for BytePlus ModelArk public foundation models. Prefer product commands `arkcli models ...` over direct Raw API calls. Note: use arkcli-custommodel to query/manage custom models uploaded or fine-tuned (`cm-xxx`) under the account; this skill covers only the public foundation model catalog. Voice/TTS/ASR/podcast/voice-design/real-time voice interaction models support only marketplace search and selection guidance; do not route them to +chat/+gen/+deploy/usage/pricing/onboard/auth apikey."
 metadata:
   requires:
@@ -48,6 +48,10 @@ metadata:
 - **Exception**: A voice model query is itself the destination. After finding marketplace voice models such as podcast, voice design, or real-time voice interaction, stop after explaining "discoverable but arkcli does not support invocation/deployment/usage/pricing". Do not continue to `+deploy` / `usage` / `pricing` / `onboard`, and do not proactively add non-arkcli integration paths.
 
 ## Quick decisions
+
+### Price lookup for a known model
+
+Read [`references/arkcli-models-get.md`](references/arkcli-models-get.md), then use `arkcli models get <model-id> --format json` and read `pricing.prices`. Match `service_type`, `label`, `dimensions`, `usage_unit`, `unit_code`, and optional `usage_period`; never select the first row or read the removed `pricing.charge_items` / `pricing.multi_charge_items`. `price: null` means unavailable; `0` is a zero rate for that condition. An empty array does not mean free or inactive. Activation and entitlements remain in `pricing.state`, `pricing.inference_free_usage`, and related fields. `--version` selects detail metadata; prices are queried by the returned foundation-model `name`, without a version-specific guarantee.
 
 ### Step 0 (hard gate): read the scenario table before selecting a command
 
