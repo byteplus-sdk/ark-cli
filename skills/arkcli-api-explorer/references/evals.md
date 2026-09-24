@@ -40,6 +40,10 @@ Expected behavior:
 - Do not use `model.list_foundation_models` as the default path merely because
   it appears in the registry.
 
+For a public API catalog, identifiers or OpenAPI schema request, route to
+`arkcli-docs` and `docs apis list/spec`. Do not substitute the local action
+registry returned by `api --list`.
+
 ## 4. Registry presence is not product support
 
 User request:

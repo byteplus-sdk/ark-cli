@@ -85,3 +85,9 @@ Expected behavior:
 - do not claim the team profile is repaired;
 - state that an empty team-seat result makes refresh fail while preserving the
   existing local key inventory and default key.
+
+## Read-only admission and disclosure ordering
+
+- A user supplies a profile type and requests only identity/default-resource compatibility checks: hand off to Auth and Resources. An empty resource list leads to a missing-information report, not `profile show/list/keys list`.
+- For explicit Profile management, visible text before the first management command must actually state online key synchronization and possible local inventory/default writeback. A promise to explain later or a post-command final answer fails this contract.
+- Do not describe the completed management query as purely read-only or guarantee unchanged local keys without evidence.

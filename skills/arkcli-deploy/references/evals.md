@@ -74,3 +74,7 @@ python3 -m scripts.run_arkcli_skill_benchmark \
   --runs-per-config 2 \
   --runtime claude
 ```
+
+## Missing model and name
+
+When the user asks to deploy an Endpoint without a model or name, perform one bounded read-only model search after authentication and present the actual candidates. Do not stop at asking for an unknown model/name, and do not create anything before selection and confirmation. Collect the Endpoint name after the model is selected.

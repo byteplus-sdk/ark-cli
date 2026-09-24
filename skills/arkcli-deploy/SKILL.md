@@ -12,6 +12,17 @@ metadata:
 
 **Prerequisite:** First use Read to read [`../arkcli-shared/SKILL.md`](../arkcli-shared/SKILL.md) to get shared authentication/configuration/write-operation guard rules.
 
+## Choose a model before collecting creation parameters
+
+After the shared authentication check, if the user has not supplied an exact
+model, make one bounded read-only query: `arkcli models search --size 10 --format json`.
+Add the user's explicit keyword or modality to that same query when available.
+Use the returned `name` and `primary_version` to present real model IDs, then ask
+the user to choose when multiple candidates remain. Do not pick the first item,
+invent a model, repeat the search, or create an Endpoint before the model is
+selected. An Endpoint name is not needed for this read-only query; collect it
+later when confirming the final creation parameters.
+
 **New flag `--set-default <modality>`**: After a real deployment succeeds, automatically set the new endpoint as the default resource for this modality (`text` / `image` / `video`) in the active profile when the user explicitly passes a modality; failures only warn on stderr and do not block the main deployment flow. For details, see [`../arkcli-shared/references/profile-defaults.md`](../arkcli-shared/references/profile-defaults.md).
 
 **Write operation + billing**: `+deploy` creates an online inference endpoint. Its workflow depends on live discovery and **does not support `--dry-run`**. BytePlus enforces a two-stage runtime gate:

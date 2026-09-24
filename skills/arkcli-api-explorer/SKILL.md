@@ -1,7 +1,7 @@
 ---
 name: arkcli-api-explorer
 version: 0.2.0
-description: "Inspect and invoke Ark CLI registered actions for BytePlus contract validation or low-level fallback. Use only after confirming that no stable product command covers the request, or when the user explicitly asks about an action, operation, registry entry, `unknown action` error, or exact `--params` payload."
+description: Inspect or invoke locally registered BytePlus ArkCLI actions when product commands cannot cover a task. Use for registry errors or exact raw payloads. Public catalogs and OpenAPI schemas use arkcli-docs.
 metadata:
   requires:
     bins: ["arkcli"]
@@ -31,6 +31,10 @@ Raw API Explorer is the final fallback, not the default command path.
 
 ## When NOT To Trigger
 
+- Public API catalogs, identifiers, OpenAPI schemas or required request fields
+  belong to [`arkcli-docs`](../arkcli-docs/SKILL.md) and `docs apis list/spec`.
+  `api --list` only lists locally compiled actions, not the public API catalog
+  or complete OpenAPI schemas.
 - A stable product command or workflow covers the goal, including model
   discovery, generation, deployment, Endpoint management, usage, profile, or
   billing.

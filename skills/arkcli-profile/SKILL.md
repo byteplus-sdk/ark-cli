@@ -23,6 +23,12 @@ A profile is a local BytePlus configuration slice that binds a profile type,
 the fixed BytePlus Region, project scope, identity, API keys, and default
 resources. Selecting a profile does not switch product or tenant.
 
+## Distinguish inspection from management
+
+- A read-only check of identity, default-resource visibility or credential compatibility is not Profile management, even when the user supplies a profile name or type. Load the Auth and Resources Skills and hand off to them. Missing information does not authorize `profile show/list/keys list`.
+- Before invoking `show/list/keys list` for an explicit Profile management task, send user-visible text stating both effects: online synchronization with the remote API key source, and possible writeback to local key inventory or the default key. For example: "This management query may synchronize remote API keys online and write back local key inventory or the default key."
+- Saying "I will explain" is only a plan. Tool descriptions, private reasoning and the final answer after execution do not replace this disclosure. Do not describe these management queries as purely read-only or claim that local keys were unchanged without evidence.
+
 ## Supported profile types
 
 | Type | Purpose |

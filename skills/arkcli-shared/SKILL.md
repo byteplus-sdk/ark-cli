@@ -64,6 +64,11 @@ Load detailed shared guidance only when needed:
 
 Choose commands from the user's goal, not from an API action name.
 
+For explicit documentation requests, a documentation URL, or missing product
+knowledge delegated by an owning Skill, use [docs](../arkcli-docs/SKILL.md).
+Read the returned Markdown before answering. Do not replace resource operations,
+authentication, diagnosis or CLI help with documentation search.
+
 1. Prefer a product command: `arkcli <domain> <verb>` or
    `arkcli +<workflow>`.
 2. Read the capability reference before executing a documented command.
