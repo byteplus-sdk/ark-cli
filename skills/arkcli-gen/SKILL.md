@@ -62,13 +62,13 @@ User intent: "Generate X"
   │
   ▼ Step 2 (mandatory, except EPs) Check available parameters for $MODEL  ──► arkcli models get $MODEL --transform supported_params
   │     Model name + has sp → **only** use the listed parameters, with values within min/max/enum
-  │     Model name + empty sp (not configured or currently unparseable) → +gen automatically applies modality fallback defaults (video 720p/5s, image 2048)
+  │     Model name + empty sp (not configured or currently unparseable) → +gen applies modality fallback defaults (video 720p/5s; image leaves size unset)
   │     EP (ep-xxx)            → Skip; do not force-fill parameters (unknown underlying capabilities); let the server decide.
   │
   ▼ Step 3 Generate based on available parameters  ──► arkcli +gen --model $MODEL [parameters allowed by Step 2] "prompt"
   │
   ▼ Step 4 (result handling)
-        Video = asynchronous: returns task_id + status=queued (**not a failure!**) → Use arkcli gen get <task_id> to poll; when it becomes succeeded, the result is automatically downloaded locally (local_path); add --wait for synchronous blocking
+        Video = asynchronous: returns task_id + status=queued (**not a failure!**) → Use arkcli gen get <task_id> to poll; when it becomes succeeded, the result is automatically downloaded locally (local_path); add --wait for synchronous blocking (capped by --timeout, default 10m; raise it for long videos)
         Image = synchronous: directly returns output_url + local_path
 ```
 
@@ -94,8 +94,13 @@ arkcli models get "$MODEL" --transform supported_params
 
 - **`$MODEL` is a model name**: Get the `supported_params` list for this model (each item contains `name / type / support / min / max / enum / required`).
   - > **MUST: Step 3 can only use parameters where `support=true` here, and values must be within the `min/max/enum` range.** Parameters not in the list (or with `support=false`) will be rejected by `+gen`.
-  - **You can directly use the ID returned by Step 1 `resources list`** (dot/display forms such as `dreamina-seedance-2-0` are all fine): `models get` automatically normalizes by DisplayName to the canonical hyphenated name. No manual conversion is needed. Only in very rare cases where `not found` is still reported should you use `arkcli models search <family name>` to check the name.
-  - If the model is found but `supported_params` is empty / `null`, that version has no configured catalog or its upstream catalog is currently unparseable. Preserve any `warn: model supported_params enrichment failed: ...` line from stderr for troubleshooting. **Do not guess parameters manually**: `+gen` automatically uses built-in modality fallback defaults (video: `resolution=720p` / `duration=5` / `ratio=adaptive`; image: `size=2048x2048`) to fill parameters you did not specify. Go directly to Step 3.
+  - **You can directly use the ID returned by Step 1 `resources list`**: `models get` normalizes by DisplayName to the canonical hyphenated name. But normalization **only accepts the one form where "the dotted spelling == the lowercased DisplayName"** — it is not "any dotted name works". Step outside that and you get `not found`:
+    - ✅ `dreamina-seedance-2.0-fast` (its DisplayName is exactly `Dreamina-Seedance-2.0-fast`) → `dreamina-seedance-2-0-fast`
+    - ✅ `dola-seedream-5.0-pro` (DisplayName `Dola-Seedream-5.0-pro`) → `dola-seedream-5-0-pro`
+    - ❌ `dola-seedream-5.0-pro-260628` — **dotted spelling + date snapshot**: the DisplayName carries no date, so it does not match
+
+    **Rule**: any name with a date snapshot always uses the hyphenated form (`dola-seedream-5-0-pro-260628`); the dotted form is only for dateless family / variant names. If `not found` persists, check the canonical name with `arkcli models search <family name>` rather than guessing where the dots go.
+  - If the model is found but `supported_params` is empty / `null`, that version has no configured catalog or its upstream catalog is currently unparseable. Preserve any `warn: model supported_params enrichment failed: ...` line from stderr for troubleshooting. **Do not guess parameters manually**: `+gen` automatically applies built-in modality fallback defaults (video: `resolution=720p` / `duration=5` / `ratio=adaptive`) to fill parameters you did not specify. **Image tasks get no `size`** — the canvas follows the aspect ratio described in the prompt plus the server default, and pinning a 1:1 constant would override a ratio the prompt already states; pass `--size` explicitly when you need a fixed canvas. When the control-plane lookup *fails* (as opposed to the model simply having no catalog), stderr also carries a `warn: ...` line saying validation was skipped — it goes to stderr rather than the JSON payload, and appears even when generation fails. Go directly to Step 3.
 - **`$MODEL` is an EP (`ep-xxx`)**: Skip this step. It is normal that supported_params cannot be found for an EP. Also, `+gen` **does not** apply fallback defaults to EPs (the model behind the EP may support higher capabilities, and forcing defaults may downgrade it incorrectly). Degrade open directly and let the server decide.
   - Only the `supported_params` lookup is skipped. A real `+gen` call still resolves image/video through `Endpoint -> ModelReference -> FoundationModel metadata`.
   - Provide `--modality` only when authoritative metadata is unavailable or conflicting.
@@ -113,7 +118,7 @@ arkcli +gen --model "$MODEL" --resolution 1080p --priority 9 "<prompt>"
 arkcli +gen --model "$MODEL" --input @ref.jpg "<prompt>"
 ```
 
-- For the full parameter set, multimodal `--input` rules, and the new `--n/--priority/--wait`, see [`references/arkcli-gen.md`](references/arkcli-gen.md).
+- For the full parameter set, multimodal `--input` rules, and the new `--n/--priority/--wait/--timeout`, see [`references/arkcli-gen.md`](references/arkcli-gen.md).
 - **Artifacts are automatically downloaded to CWD by default** (or `--save-to <dir>`). The `local_path` in JSON is the persistent artifact. The presigned `output_url` expires after 24 hours, so prefer referencing `local_path`.`--save-to=""` disables this.
 - **Automatically open artifacts with the system default application**: By default, artifacts are opened only when stdout is an interactive terminal (a person runs it directly in the terminal). When an agent / pipeline / CI captures stdout (non-TTY), **no window pops up**, and only `local_path` is returned.`--open` forces opening, and `--no-open` forces not opening. This only applies to local files that have already been saved (when an asynchronous video does not use `--wait`, there is no local file and nothing is opened). For multiple artifacts, only the first few are opened.
 - **🔑 You are an agent, so use `--open` by default**: When you (the AI agent) call arkcli, stdout is taken over by you = non-TTY, so the default auto behavior will not pop up a window. The user can only see the file path, not the finished artifact.**To let the user directly see the generated image/video, by default add `--open` to all `+gen` commands that generate images/videos for a real person and to `gen get` commands that poll to `succeeded`** (`--open` ignores TTY and forces opening on the user's desktop). Exceptions only apply when the user explicitly says "do not open it / in a script / batch / no pop-up", or when generating more than 4 images in one batch → in these cases, omit `--open` or explicitly use `--no-open`.
@@ -123,10 +128,12 @@ arkcli +gen --model "$MODEL" --input @ref.jpg "<prompt>"
 | Modality | Default behavior | How you should read the result |
 |------|---------|---------------|
 | **Video** | **Asynchronous**: immediately returns `task_id` + `status: queued` | `queued` **is not a failure**. Use `arkcli gen get <task_id> --open` to poll until `succeeded`—**this `gen get` call will also download the artifact locally and return `local_path`** (default CWD, `<task-id>.mp4`). `--open` makes the finished artifact pop up directly on the user's desktop (you are an agent, non-TTY, so without it there is only a path). You do not need to manually curl `output_url`; **do not** resubmit `+gen` just because you did not get the video (that creates a new task) |
-| Video + `--wait` | Synchronous: blocks until completion before returning | `arkcli +gen ... --wait --open`, directly get `output_url` / `local_path` and pop up the finished artifact |
+| Video + `--wait` | Synchronous: blocks until completion before returning, **but gives up once it passes `--timeout` (default 10m)** | `arkcli +gen ... --wait --open`, directly get `output_url` / `local_path` and pop up the finished artifact.**Raise `--timeout` first for long videos** (e.g. `--timeout 30m`): in measurement, nearly half of seedance-2.0 requests did not finish rendering within 10m. Hitting the cap returns "the task is still running + task id", **not a failure** — keep polling with `gen get <task-id>` and **do not re-run `+gen`** |
 | **Image** | **Synchronous**: directly returns `output_url` + `local_path` | `arkcli +gen ... --open` makes the image pop up directly for the user to view |
 
 > **⚠️ Behavior change (2.0)**: The default video task behavior has changed from "automatically wait for completion" to "return task_id immediately after submission". To use the old synchronous blocking behavior, explicitly add `--wait`.
+
+> **⚠️ `--wait` has a cap**: it blocks for at most `--timeout` (default 10m) and then returns. Video rendering often takes longer (measured: nearly half of seedance-2.0 requests exceed 10m), so **pass `--timeout 30m` explicitly for long videos**. The JSON returned at the cap is a `type: timeout` error **carrying the task id** — this is **not a generation failure**, the task is still rendering server-side; keep polling with the `gen get <task-id>` from the hint and **never re-run `+gen`** (that creates a second billed task).
 
 ## Quick decision
 
@@ -163,7 +170,7 @@ arkcli +gen --model "$MODEL" --input @ref.jpg "<prompt>"
 
 ## Common fallbacks
 
-- Model name reports `not found` → `models get` already automatically normalizes dot/display forms. If it still reports this, the name is probably truly wrong. Use `arkcli models search <family name>` to check.
+- Model name reports `not found` → `models get`'s normalization only covers the one form where "the dotted spelling == the lowercased DisplayName" (see Step 2); it is not "any dotted name works". First **convert any name carrying a date snapshot to the hyphenated form** (`dola-seedream-5-0-pro-260628`); if it still reports this, check the canonical name with `arkcli models search <family name>`.
 - Parameter rejected (`param_not_supported`) → Go back to Step 2 and check `supported_params`. Use only the listed parameters. If you really need to force it, you can add `+gen --force` to skip validation (the server still makes the final decision).
 - **Content blocked by moderation** (`ContentRiskBlocked` / `*SensitiveContentDetected` / sensitive-content hit / copyright) → This is not a parameter issue, and `--force` cannot bypass it. Adjust the prompt / sensitive content in the input assets and retry. For structured blocking causes + fix guidance, switch to `arkcli doctor error <code>` in [`../arkcli-doctor/SKILL.md`](../arkcli-doctor/SKILL.md) (full coverage for all 5 video-generation blocking subtypes).
 - Authentication error → Switch to [`../arkcli-auth/SKILL.md`](../arkcli-auth/SKILL.md).

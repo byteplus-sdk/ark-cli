@@ -26,7 +26,7 @@ However, **image tasks are not included** because they use the synchronous endpo
 ## Command quick reference
 
 ```bash
-# 1. Submit a video task with +gen (asynchronous by default, immediately returns task_id; add --wait for synchronous blocking).
+# 1. Submit a video task with +gen (asynchronous by default, immediately returns task_id; add --wait --timeout 30m for synchronous blocking).
 arkcli +gen "A cyberpunk city at sunset" --model dreamina-seedance-... --duration 5
 
 # 2. After getting task_id, query by ID separately (no polling, one-time fetch).
@@ -132,5 +132,5 @@ CLI subcommands are human-friendly wrappers around the raw API; the commands are
 ## Use with `+gen`
 
 - When `+gen` itself times out while polling, it returns `task_id` and a hint. Continue tracking with `gen get <task-id>`, which is more cost effective than rerunning `+gen` (rerunning creates another new task and consumes quota again). The `gen get` call that polls to `succeeded` downloads the output locally along the way, so you do not need to manually curl `output_url`.
-- Asynchronous submission (without `--wait`) + polling with `gen get` is the mainstream video workflow: `arkcli +gen ... --modality video` gets `task_id` → repeatedly run `gen get <id>` until `succeeded` → the output is automatically saved locally. With `--wait`, it is the synchronous blocking version; the two paths have the same persistence behavior.
+- Asynchronous submission (without `--wait`) + polling with `gen get` is the mainstream video workflow: `arkcli +gen ... --modality video` gets `task_id` → repeatedly run `gen get <id>` until `succeeded` → the output is automatically saved locally. With `--wait`, it is the synchronous blocking version; the two paths have the same persistence behavior — **but `--wait` is capped**: it blocks at most `--timeout` (default 10m), so raise it explicitly for long videos (e.g. `--timeout 30m`). When the cap is hit the task is still running: keep polling with `gen get <task-id>` and **do not re-run `+gen`**.
 - `gen list` is the only entry point for checking "whether that task I submitted earlier actually exists"; if `+gen` does not get a normal return after submission, it is recommended to run `gen list --status running` first.

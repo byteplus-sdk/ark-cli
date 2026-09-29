@@ -30,29 +30,15 @@ metadata:
 >
 > "How much plan quota remains?" → `plan` or concise `balance --type plan`; "How many tokens did I use today?" → `stats`; "How much free quota/media capacity remains?" → `balance`; "**How much did each seat use / team-seat usage distribution?**" → `seats --with-usage`. Pure management ("who is bound / list seats / assign seats") → `arkcli-plans`.
 
-## Step 0 (MUST): route "my usage" by profile first
+## Step 0: choose the metric, then verify the identity
 
-**For every "my usage / how many tokens did I use / my consumption" request, complete these three steps before any `usage` command.** Otherwise, "my usage" is incorrectly equated with "my endpoint usage", omitting plan quota buckets.
-
-**Core principle: query the plan bucket for "my profile tier" first, then the endpoint bucket.** `profile.type` determines the tier; modality determines whether the plan covers it.
-
-1. **Inspect profile.type**: run `arkcli auth whoami --format json` and read `profile.type` (`platform` / `coding-plan` / `coding-plan-team`) from the persisted Profile summary. `profile show/list/keys list` can synchronize remote keys and write back the local key inventory or default key, so they are not routine Usage admission. If the summary lacks the field, report it as unknown; do not switch Profile, Key, default, or billing lane.
-2. **Determine modality**: if the user names a model/modality, query only it; otherwise cover all modalities (text / image / video according to the table).
-3. **Route by (type × modality)** (`①→②` means plan bucket first, endpoint bucket second; one cell means endpoint only):
-
-| profile.type | Text model | Image model | Video model |
-|---|---|---|---|
-| `coding-plan` / `coding-plan-team` | ① `arkcli usage plan`<br>② `arkcli usage stats --start <YYYY-MM-DD> --mine` | `arkcli usage stats --start <YYYY-MM-DD> --mine`<br>(not covered by plan) | `arkcli usage stats --start <YYYY-MM-DD> --mine`<br>(not covered by plan) |
-| `platform` | `arkcli usage stats --start <YYYY-MM-DD> --mine`<br>(no plan) | `arkcli usage stats --start <YYYY-MM-DD> --mine` | `arkcli usage stats --start <YYYY-MM-DD> --mine` |
-
-> **Date arguments**: Replace `<YYYY-MM-DD>` with an actual date. `usage stats` **requires `--start`**; omission returns `required flag(s) "start" not set`, not today's date. `--end` defaults to today. **Derive `--start` from natural language**: today → today; yesterday → yesterday; past N days/week → today-(N-1); this/last month → month start/end. **No time expression → default `--start` to today and omit `--end` (same day)**. `usage plan` / `usage balance` do not require dates. Before execution, expand shorthand elsewhere in this skill that omits `arkcli` or `--start`.
-
-**Why**: Coding Plan includes text generation only. Text checks plan; images/videos use the platform endpoint pool and only endpoint usage. Platform has no plan, so all modalities use metered endpoint usage.
-
-**Step 0 boundaries:**
-- Not subscribed (`usage plan` returns `subscribed:false`) → plan bucket is empty; naturally continue to `usage stats --mine`, not an error.
-- Coding-plan text quota can show only quota percentage through `usage plan`, not model breakdown.
-- See "Quick decisions" and [`references/arkcli-usage-stats.md`](references/arkcli-usage-stats.md) for endpoint buckets and endpoint→apikey empty-result fallback.
+- Explicit Coding Plan quota questions use `usage plan --product coding-plan|coding-plan-team`. Subscription ownership belongs to the account/user, not the active profile type; a platform profile does not prove there is no subscription.
+- Platform Token/request usage uses `usage stats --start <YYYY-MM-DD>`; personal scope must retain `--mine`, including when adding grouping. Only query both buckets when the user asks for both; label them separately and do not sum quota percentages and Tokens.
+- Coding Plan has quota snapshots, not per-model/Harness or Endpoint/API Key attribution. State this boundary; do not append platform stats as a substitute. Agent Plan is not offered on BytePlus.
+- If "my usage" is ambiguous, clarify the metric from the current context before querying. Do not switch Profile, Key, Project or account scope to fill gaps. Reuse known identity context; when a missing summary is needed, use `arkcli auth whoami --format json`. Ordinary admission does not run `profile show/list/keys list`, which can synchronize and write back keys.
+- Stats require explicit `--start`; derive dates from the request and disclose a today-only default. Split long ranges according to the reference instead of silently shortening them.
+- Distinguish failed queries, successful empty records and nonempty zero totals. Check time range, aggregation delay, metric, identity and filters before concluding no usage. Recent missing records do not prove no call occurred.
+- Report metric, identity/scope, dates and freshness. Platform attribution uses actual `ModelEndpoint` / masked `AuthToken` evidence; do not retrieve plaintext keys merely to identify usage.
 
 ## Applicable scenarios
 
@@ -80,7 +66,7 @@ metadata:
   - `arkcli usage plan --product=X`: skip probing and query one.
     - **This is the same data as `balance --type plan`**. `usage plan` provides the complete output (`subscribed` / `updated_at`), while `balance --type plan` provides a concise projection without metadata. Prefer `usage plan`; use `balance --type plan` only when reconciling plan balances together with free quota or media-asset capacity.
 - "My usage / tokens today / endpoint consumption":
-    - **First complete Step 0 (described at the beginning of this doc) for profile.type + modality**. For coding-plan text, query the plan bucket with `usage plan` first and then the endpoint bucket below. Platform, or coding-plan image/video, goes directly to the endpoint bucket. Do not equate "my usage" with "my endpoint usage".
+  - First choose the requested metric using Step 0. An explicit platform/Endpoint request does not need a plan query first.
   - If the user names a voice model/TTS/ASR → **do not query usage**. Currently arkcli doesn't support querying the usage of audio models.
   - **BytePlus:** first run `arkcli usage stats --start <YYYY-MM-DD> --mine` (endpoint dimension).
     - `data_count > 0` → use `totals`.

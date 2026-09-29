@@ -167,9 +167,17 @@ ARKCLI_NO_UPDATE_NOTIFIER=1 ARKCLI_CALLER_TYPE=ai_agent ARKCLI_CALLER_NAME=<agen
 - If a migration page omits a remembered field mapping, omit that row or read
   and cite its separate schema; never attribute the mapping to the migration page.
 
-- A public body read supplies `source_url`: cite that exact asset, preserve
-  `url` and `snapshot` for continuation, and do not treat outline metadata as
-  body evidence. MCP without `source_url` uses its returned `url`.
+| Citation scenario | Expected behavior |
+|---|---|
+| A body read returns both a documentation-site `url` and CDN Markdown `source_url`; user wants parameter guidance and sources | Link the document title to `url`, not the CDN asset; keep `url` and `snapshot` for continuation |
+| A section read returns `url` with an anchor | Preserve that returned anchor; do not invent one from the title |
+| User explicitly requests raw Markdown or revision evidence | Also provide the actual `source_url`, labeled as the Markdown source; never pass it to `docs get` |
+| Only the `CreateModelCustomizationJob` API spec has been read, without a page URL | Locate the operation name or title and read the corresponding parameter page before citing it; if unavailable, state the gap without deriving a link from `api_path` or attributing schema-only details to unverified body text |
+| MCP returns no `source_url` | Use its returned `url`; read the body if only outline metadata is available |
+| User names a section on Overview that contains a link and code examples | Read that section on Overview and describe both; label a linked Quick start page as an additional source, never claim the Overview section has only a link |
+| Schema confirms `messages` and `model` as required, but the body chunk read so far shows only `messages` | Attribute both requirements to the schema and only `messages` to the body; do not attach an unchecked `externalDocs.url` as a verified page |
+| User requests the first two pages of `docs list --query Responses --limit 2`, but only page one ran | Show page one only. Run page two with the same query, snapshot and offset, then inspect its items before listing them |
+| User requests the public API contract catalog after the Agent reads root help or `api --help` | Use the published `docs apis list` catalog. `api --list` enumerates only local actions and cannot answer the public-contract request |
 
 - Role-dependent message schemas require content for some roles, while another
   permits content or tool calls: keep the branches separate; never conclude that

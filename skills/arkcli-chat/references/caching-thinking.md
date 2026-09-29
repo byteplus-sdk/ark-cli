@@ -37,7 +37,7 @@ arkcli +chat "What about apples?" --model ep-xxx \
   --caching enabled --store \
   --previous-response-id "$RID"
 
-# Verify cache hit: use chat get to retrieve the response; .caching.type should be enabled.
+# Check cache configuration, not a cache hit: retrieve the response with chat get.
 arkcli chat get "$RID" --format json | jq .caching
 # → {"type":"enabled"}
 ```
@@ -85,7 +85,10 @@ In non-streaming mode, both `+chat` and `chat get` return an extended `Responses
 }
 ```
 
-⚠️ In streaming mode (`--stream`), these echoed parameters are still **unavailable** in PR-2 — wait for PR-4 to add parsing for the `response.completed` event. During streaming, stdout is still `Thinking: ... Response: ...` plain text.
+For machine-readable streaming evidence, use `--stream --include-events` and inspect the
+successful terminal event's actual response fields. Plain `--stream` is human-readable,
+not the flat JSON above. Missing echoes remain unknown; do not add another inference call
+just to obtain them. See [stream-events.md](stream-events.md).
 
 ## Validation checklist (autotest mapping)
 
@@ -97,8 +100,8 @@ In non-streaming mode, both `+chat` and `chat get` return an extended `Responses
 | 8 test cases of `cache/cache_test.go` | ✅ |
 | `cache/prefix_cache_test.go` | ✅ (uses --cache-prefix) |
 | `partial/partial_mode_test.go` | ✅ (Thinking + Caching combination) |
-| `Test_Stream_ExpireAtAndCaching` | ⚠️ Input parameters can be passed, but output parameter echoes require PR-4 |
-| 5 test cases of `cache/cache_stream_test.go` | ⚠️ Same as above |
+| `Test_Stream_ExpireAtAndCaching` | Inspect actual terminal events with --include-events |
+| 5 test cases of `cache/cache_stream_test.go` | Inspect actual terminal events; configuration alone does not prove a cache hit |
 
 ## Common errors
 
@@ -114,6 +117,8 @@ In non-streaming mode, both `+chat` and `chat get` return an extended `Responses
 
 `--reasoning-effort` (already available before PR-1) and `--thinking` are two independent dimensions:
 
-- `--thinking disabled` directly disables the thinking phase, so `--reasoning-effort` no longer takes effect.
-- `--thinking enabled` + `--reasoning-effort high` is required to actually trigger deep reasoning.
-- autotest `Test_07_ThinkingReasoningCompatible` / `Test_08_ThinkingReasoningConflict` verify this combination.
+- Use `--thinking disabled` when the user asks to disable thinking. `--reasoning-effort minimal` controls effort and is not a replacement for that switch.
+- These options map to Responses request fields `thinking.type` and `reasoning.effort` respectively. Preserve explicit values in SDK/HTTP examples; do not put effort inside thinking or automatically add high effort.
+- Accepted combinations and effective behavior depend on the target model and server. Preserve actual errors and echoes rather than promising universal support.
+- `caching.type=enabled` is configuration, not proof of a cache hit. Use actual usage cache-hit counters when available; missing counters mean unknown savings.
+- Latency comparisons need the exact model version, inputs, settings, cache state, and measured time. Do not claim a universal disabled/minimal/high ordering or add paid requests merely to test a guess.

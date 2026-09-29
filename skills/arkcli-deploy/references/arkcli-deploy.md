@@ -11,6 +11,13 @@
 
 ## Command templates
 
+Before creation, resolve the model choice and reuse details for that exact version.
+An invalid or retired version is not fixed by activation, changing the prompt, or
+repeating creation. `--tags` takes an array of Key/Value objects, not a map.
+Quote JSON arguments as complete JSON; single-value flags such as `--view summary`
+need a value. Valid syntax does not prove backend compatibility. Keep the BytePlus
+disclosure/confirmation workflow above; never invent `+deploy --dry-run`.
+
 ```bash
 # Stage 1: normalize and disclose the final plan; no model activation or Endpoint creation
 arkcli +deploy --name my-endpoint --model dola-seed-2-1-turbo-260628

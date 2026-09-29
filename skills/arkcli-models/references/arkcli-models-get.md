@@ -33,6 +33,14 @@ Model details in JSON format, aggregated from multiple underlying APIs. Includes
 - Missing field or empty array: no usable parameter catalog is currently available for that version, so `--transform supported_params` may print `null`.
 - Present but malformed upstream JSON: the CLI prints `warn: model supported_params enrichment failed: ...` with model/version context to stderr while stdout still returns the remaining model detail.
 
+## Parameter evidence and conflicting queries
+
+- A listed parameter with `support=true` is positive catalog evidence; check its type, range, enum, and required constraints. Report an explicit `support=false` faithfully. An unlisted parameter does not prove that the server rejects it, ignores it, or applies a particular default.
+- Parameter catalogs, API-specific `api_support`, and actual calls are separate evidence. Missing/unknown API entries cannot be inferred from another API, a model name, or a thinking capability.
+- If search/get disagree, first align the exact model version, query scope, and any returned cache/warning context. If the conflict remains, report each source separately; do not union their capabilities or silently prefer the more permissive value. Search metadata for a primary version does not override get for another version.
+- Runtime behavior of an unlisted parameter requires the relevant CLI/SDK/API contract or an authorized same-model/API/identity test. Do not initiate paid inference merely to answer a catalog question.
+- On NotFound, distinguish errors from empty results, preserve the supplied ID, and check supported name normalization and the requested version. Route `cm-*`, `ep-*`, and Plan aliases to their owning resource commands. For catalog troubleshooting, use a bounded search and change only an evidence-backed name/filter; include deprecated models when investigating historical resources. Do not guess version suffixes, silently substitute candidates, switch identity, or bypass the owning workflow's single-query budget.
+
 ## Prices and entitlements
 
 Prices now use `pricing.model_name`, `pricing.prices`, and optional `pricing.dimension_attributes`. The old `pricing.charge_items` / `pricing.multi_charge_items` arrays have been removed. Scripts and Agents must migrate; do not filter by the old `type` field.

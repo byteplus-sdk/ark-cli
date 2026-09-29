@@ -149,7 +149,8 @@ arkcli +new-agent --fork agent-xxx --format json
   - Expanded configuration:`Multiagent`, `Metadata`, `Tags`
   - server response timestamp:`CreateTime`/`CreatedAt`, `UpdateTime`/`UpdatedAt`
 - Structure Output Use `agent agent get <agent-id> --format json` or `--format yaml` Keep all non-empty fields returned by the server;The caller shall not discard, truncating or replacing config field with a summary.human-readable summary compresses time, ID Wait for display format,But this cannot hide the above configuration content..
-- If submitted `request.System` Non-empty but create response or `GetAgent.Result.System` empty,Critical Reporting"Server did not echo/Uncommitted",Do not assume prompt Effective,and retain request values and server values for troubleshooting.
+- Read the correct output envelope first: `agent agent create/get --format json` uses `Result`; `+new-agent` uses `data.agent` (also exposed as `Result`). Check that the object exists before interpreting a null field.
+- If the create response omits System, use the returned real ID for a read-only `agent agent get`. Reuse the default readback from `+new-agent` when available. A failed readback or missing object/field means the persisted value is unconfirmed, not proven unsaved. Report explicit differences without automatically creating or updating another resource.
 - `+new-agent` Current disabled LLM Draft and template;Natural language understanding, parameter selection, User confirms by calling `arkcli` of BytePlus ModelArk AI agent Complete.
 
 ## Iteration Agent and create Session
@@ -190,6 +191,12 @@ arkcli +new-agent --fork agent-xxx --format json --transform "data.agent.id"
 arkcli +new-agent --fork agent-xxx --format yaml > new-agent.yaml
 arkcli +new-agent --fork agent-xxx --no-echo --format json
 ```
+
+## Finding an existing Agent
+
+- An explicit Agent ID goes directly to `agent agent get <agent-id> --format json`. For a name, use `agent agent list --name <keyword>` and inspect pagination. Multiple candidates require selection from the actual returned IDs, not an invented or silently chosen target.
+- A successful empty `ListAgents` result is not proof that a known Session's Agent never existed. Check filters/pages; if only a Session ID is known, read that Session's saved Agent reference/snapshot and get the current Agent only when it provides a real ID.
+- A Session snapshot is historical configuration, not proof of current Agent existence or permission. Report list-empty, not-found and forbidden separately; do not create an Agent, change profiles or fetch new keys to repair an empty list.
 
 ## Custom tools
 

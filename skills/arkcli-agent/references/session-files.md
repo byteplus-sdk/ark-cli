@@ -88,6 +88,16 @@ arkcli agent env list --page-all --format json
 
 `--page-all` defaults to `Limit=100`, and the next page is fetched using `NextPage` in the response. `--page-limit` limits the number of pages to request, not the number of results.
 
+## Other resources at Session creation
+
+Complex resources belong to `session create --resource`, not the file-only `session resources add`. For an already selected memory store, use an array such as `[{Type: memory_store, MemoryStoreId: ms-xxx, Name: user-memory}]`. Canonical field names are PascalCase and type values remain snake_case. The current CLI also normalizes supported aliases such as `memory_store_id`; snake_case is not inherently invalid. For a required-field error, inspect nesting, the real ID and the local Preview payload rather than guessing fields or creating a substitute resource.
+
+## Diagnostics and export
+
+- Use `arkcli +debug <session-id> --format json` for a known Session. Distinguish running, failed and waiting-for-confirmation states from the returned Session/events/resources/threads. Warnings indicate partial retrieval failures, not empty data.
+- On an explicit export request, use `arkcli +export <session-id> --output ./session-diagnostics.tar.gz`. This packages CLI-visible diagnostics, not a complete workspace, memory store or environment snapshot. Explain the manifest/notes, event count and warnings.
+- The archive lives on the CLI host. Inspect potentially sensitive messages/code/business data before delivery; a remote sandbox path is not a file on the user's computer. Do not automatically upload or publish diagnostics.
+
 ## Files and Session Resources
 
 - Upload local files to the Files API: `arkcli agent file upload --path ./data.csv --purpose user_data --wait-active`.

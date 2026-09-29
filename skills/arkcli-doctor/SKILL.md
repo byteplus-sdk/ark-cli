@@ -321,6 +321,18 @@ Official BytePlus references:
 
 ## Output handoff
 
+For a request_id / x-request-id / LogID alone, explain that doctor cannot retrieve the
+individual log or trace. Ask for the error response/code, resource ID, or occurrence time
+and symptoms. Never pass a RequestId to `doctor error` as an error code or present resource
+aggregates as that request's trace. Preserve the ID for support when more evidence is unavailable;
+do not promise that the console grants cross-service log access.
+
+`doctor error` reads a local error catalog: its `root_cause` is a general explanation,
+not request-log evidence for this account or RequestId. For aggregated diagnostics and metrics,
+retain the actual resource, time window, and availability state. Missing fields, empty arrays,
+or failed queries do not establish zero errors or health. A recommended fix is not an executed
+or verified fix.
+
 Return, in order:
 
 1. The highest-severity finding or the explicit unknown state.

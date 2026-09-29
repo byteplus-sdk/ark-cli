@@ -70,6 +70,13 @@ arkcli update --yes
 Explicit `arkcli update` and `arkcli update --check` remain available in every
 mode. `disabled` stops only silent installation. `disabled` still allows implicit checks and version notices.
 
+After a background automatic patch update commits and releases its update locks,
+the newly installed binary silently runs bare `+connect` once. The matching
+BytePlus CDN Skills have already been staged with that version, so this reads
+the local snapshot without `--refresh`. Output goes to `update-apply.log`.
+If Agent Skill sync fails, the CLI update remains committed; inspect the log
+and retry with `arkcli +connect`.
+
 For a persistent version pin, do not only downgrade with npm. Instruct the user
 to persist `arkcli config set update.mode disabled` before installing an exact
 version. A reinstall never reuses the old exact receipt: current latest

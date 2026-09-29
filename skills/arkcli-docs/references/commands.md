@@ -23,30 +23,28 @@ requirements and are blocked by the authentication gate when not logged in.
 | List only API identifiers | `arkcli docs apis list --transform 'apis.#.id'` | Reduce output and select an identifier from the actual response |
 | Read an API contract | `arkcli docs apis spec --id "<id-from-list>"` | Prefer `--id`; or `--api-path` / a unique `--service`. `content` is the OpenAPI JSON |
 
-## Continue from saved output
+## Pagination and large output
 
-Save the complete first JSON in its own successful command, then read the file.
-An echoed exit code or file size cannot replace the result. Use a task-specific
-temporary path; these paths are examples. Add the caller-attribution prefix:
-
-```bash
-arkcli docs list --query "Responses" --limit 2 > /tmp/ark-docs-page.json
-```
-
-In a separate invocation, extract the exact snapshot and next offset, keeping
-the original query and limit:
+For a small page, execute the first command on its own and read its original
+JSON result:
 
 ```bash
-python3 -c '
-import json, subprocess
-with open("/tmp/ark-docs-page.json") as source:
-    page = json.load(source)
-if page.get("has_more"):
-    subprocess.run(["arkcli", "docs", "list", "--query", "Responses",
-                    "--limit", "2", "--snapshot", page["snapshot"],
-                    "--offset", str(page["next_offset"])], check=True)
-'
+arkcli docs list --query "Responses" --limit 2
 ```
+
+Only after seeing `has_more=true`, execute the next page as another standalone
+CLI command. Use the actual returned snapshot and next offset, preserving the
+query and limit. Do not list page two before seeing its `items`:
+
+```bash
+arkcli docs list --query "Responses" --limit 2 --snapshot "<actual snapshot from page one>" --offset <actual next_offset from page one>
+```
+
+Only for large output, save the complete first JSON to a task-specific file,
+read that JSON and extract `snapshot` / `next_offset`. File size, echoed exit
+status and page-one paging metadata do not prove page-two items. Run the next
+page in a separate `arkcli docs list` call, not inside a Python subprocess.
+Add the caller-attribution prefix to these examples.
 
 For body continuation, extract `url`, `snapshot` and `next_chunk_start` from the
 first get JSON, pass them to `docs get` with `--snapshot` and `--chunk-start`,
@@ -254,6 +252,19 @@ documentation feature does not exist".
 
 ## Citation discipline
 
+- For user-facing citations, link the document title to the documentation-site
+  `url` from the body read, preserving returned section anchors. `source_url`
+  records the CDN Markdown actually read for verification; show it separately
+  with a clear label only when raw Markdown or revision evidence is requested.
+  CLI continuation still uses `url` and `snapshot`; MCP uses its returned `url`.
+  An outline alone is not body evidence.
+- `apis spec` returns no documentation-site URL. To link parameter documentation,
+  locate the operation name or title with `docs search` / `docs list`, then
+  verify the same operation and parameter content with `docs get` and cite its
+  `url`. After looking up `CreateModelCustomizationJob`, for example, still
+  locate its request-parameter page; neither `api_path` nor a schema asset path
+  is that page's address. If the page cannot be found, state the gap and keep
+  parameter conclusions grounded in the schema actually read.
 - Use only URLs and snapshot values the commands returned. Never invent a
   document ID, MCP endpoint, snapshot, API path, or schema.
 - Published aliases and manifest redirects resolve automatically. An old numeric
@@ -265,9 +276,3 @@ documentation feature does not exist".
 - Read only the chunks needed to answer, but always read the full
   prerequisites, limitations and complete code examples. A small first read is a
   context budget, not proof that the answer is complete.
-
-## Citation source
-
-Body reads return `source_url` when using the public CDN. Cite this exact
-Markdown asset URL; retain `url` and `snapshot` for CLI continuation. Outlines
-do not return `source_url`, and MCP continues to use its returned `url`.

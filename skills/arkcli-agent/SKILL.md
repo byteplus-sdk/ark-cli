@@ -20,6 +20,12 @@ Before execution, read the corresponding reference based on the user's intention
 
 ## Minimum Decisions for Agent Creation
 
+For questions about command usage, field meanings, or complete output already available,
+answer from documentation and existing evidence without live probes. Query the server for
+current account configuration, resource state, or model availability. Reuse complete results;
+a name/grep miss does not prove absence. Identify whether the target is an Agent, Environment,
+or Session; use a supplied exact ID directly instead of listing everything.
+
 | Input | Required Handling |
 | --- | --- |
 | No primary Agent model specified | Start with `arkcli agent model list --format json` and read all candidates; do not add query by default, truncate results, or invent IDs. Fetch exact-version metadata only for explicit context/modality/capability requirements |

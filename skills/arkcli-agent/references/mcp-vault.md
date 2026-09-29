@@ -2,6 +2,13 @@
 
 ## Query MCP to Attach
 
+Credentials must match the target provider's service. Never bind a key to an unrelated
+provider to make creation succeed, or hide it in metadata/tags. Do not probe each provider
+with curl/web_fetch; use the actual creation/login result. OAuth requires its external
+authorization flow, not a chat approval. Stop on discovery/authorization failures rather
+than switching to a token to bypass them. Disambiguate multiple matching providers using
+their returned names, URLs, and credential types; never invent unregistered providers.
+
 Registered and usable MCP providers that are registered by the backend can be queried by the following command:
 
 ```bash

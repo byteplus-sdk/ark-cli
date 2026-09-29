@@ -33,10 +33,14 @@ metadata:
 
 ## Quick decision
 
-**Criteria for using `+chat` (all three must be met):**
-1. The user provides images/videos/audio, but the intent is **open-ended chat/question answering/reasoning/thoughts/comments** (not a fixed output form).
-2. Cannot be mapped to one of the 12 `arkcli-understand` subskills.
-3. Or the user needs multi-turn continuation with `--store` / `--previous-response-id`.
+**Use `+chat` for:**
+- Plain-text questions or reasoning, and open-ended multimodal conversations; attachments are optional.
+- Continuing a Responses conversation with `--store` / `--previous-response-id`; storage is not required for a single turn.
+- Prefer `arkcli-understand` for the specialized outputs below, rather than selecting chat merely because an attachment is present.
+
+Before disabling thinking, comparing latency/cache behavior, or delivering SDK code, read
+[`references/caching-thinking.md`](references/caching-thinking.md). Minimal effort does not disable thinking;
+a cache configuration echo does not prove a hit or establish a fixed latency ranking.
 
 **Criteria for switching to `arkcli-understand` (switch if any one is met):**
 - The user wants "transcription/speech-to-text/speech recognition/ASR" → understand.

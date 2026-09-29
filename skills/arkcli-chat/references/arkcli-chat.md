@@ -6,6 +6,36 @@ A high-level wrapper for the data-plane Responses API (`POST /responses`). A sin
 
 ## Commands
 
+### Common option mistakes
+
+Use `--model ep-...` (not `--endpoint`), `--thinking disabled` (not
+`--thinking type=disabled`), `--instructions` (not `--system`),
+`--max-output-tokens` (not `--max-tokens`), and `--reasoning-effort`
+(not `--reasoning` or `--effort`). On an unknown flag/subcommand, check the
+current leaf help rather than retrying guessed spellings. Image/video generation
+belongs to gen, not a chat/text Endpoint.
+
+`+chat` does not expose `--parallel-tool-calls`. Use only registered tool options from leaf help; `--max-tool-calls` is not a serialization switch. Missing CLI control neither guarantees serial execution nor proves a universal concurrent default. If the user needs explicit `parallel_tool_calls`, verify the target Responses API/SDK contract and explain the current CLI boundary instead of inventing a flag.
+
+### Long output and performance delivery
+
+- Choose an output limit within the user's budget and the target model's supported range.
+  Do not blindly maximize it or repeatedly regenerate to assemble an answer.
+- A length-related `status=incomplete` is truncated output, not a complete delivery.
+  Preserve the partial content and real response ID. Continue only when requested, using
+  the stored ID and the same identity/key, model, and calling context; align with the
+  previous ending to avoid duplicated or missing passages.
+- Assemble only `.content`, never `reasoning_content`. If the earlier response was
+  not stored, expired, or is inaccessible, disclose that continuity cannot be confirmed.
+- For requested latency measurements, hold model version, prompt, and output limit fixed
+  and vary one setting at a time. Measure TTFT from the first final-answer text delta in
+  `--stream --include-events`, not the first reasoning event, head/tail truncation, or
+  total runtime. See [stream-events.md](stream-events.md); label small samples as
+  same-environment observations, not production SLAs.
+- Preserve stdout and stderr separately; never parse mixed `2>&1` output as JSON.
+  If a capture environment merges streams, `--no-progress` suppresses heartbeats,
+  but errors still need to be retained.
+
 > **⚠️ `--model` must be in the complete `<name>-<primary_version>` form, such as `dola-seed-2-1-turbo-260628` or `seed-2-0-lite-260428`, or an endpoint ID (`ep-xxx`). Passing only the family name, such as `dola-seed-2-1-turbo` or `glm-5-2`, will return 404 `InvalidEndpointOrModel.NotFound`.**
 >
 > The `primary_version` format is not fixed. It is commonly a 6-digit value such as `260628`, but it can also be a 6-digit value such as `260428`, a prefixed value such as `preview-260328`, a short number such as `2507`, or even an empty string (in that case, the full ID is the family name itself). About half of models are not 6-digit versions. For details, see link 0 in [`../../arkcli-models/SKILL.md`](../../arkcli-models/SKILL.md).**Do not use your own regular expression to decide "whether it looks like a complete ID".**

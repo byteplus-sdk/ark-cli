@@ -2,7 +2,7 @@
 
 > **Prerequisite:** Read [`../arkcli-shared/SKILL.md`](../../arkcli-shared/SKILL.md) first to understand authentication, global parameters, and safety rules.
 
-List the BytePlus ModelArk model catalog with pagination, modality filtering, and sorting. It is suitable for full enumeration, statistics, and asset inventory. If the user is looking for "which model is suitable for a task", still prefer `arkcli models search`.
+List the BytePlus ModelArk public foundation-model catalog with pagination, modality filtering, and sorting. It is suitable for public catalog enumeration and statistics. If the user is looking for "which model is suitable for a task", still prefer `arkcli models search`.
 
 ## Commands
 
@@ -13,7 +13,7 @@ arkcli models list
 # Filter by modality
 arkcli models list --modality text
 
-# Exact filtering by name
+# Case-insensitive substring filtering by name
 arkcli models list --name dola
 
 # Pagination control
@@ -31,71 +31,22 @@ arkcli models list --page-all --sort-by CreateTime --sort-order Desc --format js
 | Parameter | Required | Type | Description |
 |------|------|------|------|
 | `--modality` | No | string | Filter by modality: `text` / `image` / `video` / `audio` / `embed` |
-| `--name` | No | string | Exact filtering by model name |
+| `--name` | No | string | Case-insensitive substring filtering by model name |
 | `--page-number` | No | int | Page number (>=1) |
 | `--page-size` | No | int | Number of entries per page |
 | `--sort-by` | No | string | Sort field, such as `UpdateTime`, `CreateTime` |
 | `--sort-order` | No | string | Sort direction. Valid values: `Asc` / `Desc` (uppercase first letter) |
 
-## Custom models / recently created statistics
+## Public catalog versus account assets
 
-When the user asks "my custom models", "how many custom models were created in the past seven days", or "list them", this is an asset inventory request. Use `models list` and do not switch to `arkcli api --list` to explore Raw APIs.
+`models list` enumerates public foundation models, not account-owned custom models or deployed Endpoints.
 
-Recommended process:
+- For "my custom models" or recent custom-model creation counts, use [arkcli-custommodel](../../arkcli-custommodel/SKILL.md) and `arkcli models custommodel list --mine --page-all --format json`. Remove the personal scope only when explicitly asked for account-wide assets. Do not add `--ready` when counting all created models.
+- Filter actual asset creation timestamps in the user's timezone and time window. Missing timestamps or incomplete pagination mean unknown/partial counts. Never infer ownership from public catalog names, tags, model types, or creation timestamps.
+- Deployed resources belong to `infer endpoint list`; currently callable resources belong to `resources list`. Coding Plan catalogs use `plans model-list` for the explicit plan. These sets are not interchangeable.
+- Missing capability fields in `models list` are not negative evidence. Use exact-model/version `models search/get` metadata. An empty public catalog does not prove that the account has no custom assets or Endpoints.
 
-1. First confirm authentication status: `arkcli auth status`.
-2. Retrieve the complete list: `arkcli models list --page-all --sort-by CreateTime --sort-order Desc --format json`.
-3. If the current version provides a custom-model type flag, prefer that flag. Otherwise, filter the local JSON using available fields such as `model_type`, `type`, `customization_type`, `source_type`, `customized_tags`, and `create_time`.
-4. If there is no server-side time-window flag, compare dates locally using `create_time`.
-
-Example:
-
-```bash
-arkcli models list --page-all --sort-by CreateTime --sort-order Desc --format json > /tmp/ark-models.json
-python3 - <<'PY'
-import json
-from datetime import datetime, timedelta, timezone
-
-data = json.load(open("/tmp/ark-models.json"))
-items = data.get("items") or []
-cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-
-def parse_time(value):
-    if not value:
-        return None
-    value = value.replace("Z", "+00:00")
-    try:
-        return datetime.fromisoformat(value)
-    except ValueError:
-        return None
-
-def is_custom(item):
-    haystack = " ".join(str(item.get(k, "")) for k in (
-        "model_type",
-        "type",
-        "customization_type",
-        "source_type",
-    ))
-    tags = item.get("customized_tags") or []
-    haystack += " " + " ".join(str(tag) for tag in tags)
-    return "custom" in haystack.lower() or "customization" in haystack.lower()
-
-matched = []
-for item in items:
-    created = parse_time(item.get("create_time") or item.get("CreateTime"))
-    if created and created.tzinfo is None:
-        created = created.replace(tzinfo=timezone.utc)
-    if created and created >= cutoff and is_custom(item):
-        matched.append(item)
-
-print(json.dumps({
-    "count": len(matched),
-    "items": matched,
-}, ensure_ascii=False, indent=2))
-PY
-```
-
-`--transform` is suitable only for lightweight extraction and counting, such as `--transform 'items.#'` and `--transform 'items.#.name'`. The current transform is not full jq and does not support date operations or predicates such as `?(@.create_time)`. For time windows, use `--format json`, followed by `python3` / `jq` for client-side filtering.
+`--transform` extracts fields such as `items.#` or `items.#.name`; it is not full jq and cannot perform date arithmetic. Retain complete JSON before local projection/filtering, and do not count a truncated sample as the full inventory.
 
 ## Return value
 
@@ -105,14 +56,14 @@ A paginated JSON result with top-level fields `page_number`, `page_size`, `total
 
 | Error | Cause | Handling |
 |------|------|---------|
-| Empty result | Exact `--name` matching found no result | Use `arkcli models search` for fuzzy search |
+| Empty result | The `--name` substring matched no public models | Use `arkcli models search` for fuzzy search |
 | Authentication failed | Not logged in or credentials expired | Run `arkcli auth login` to re-establish BytePlus identity |
 
 ## Notes
 
-- `--name` is an exact match. For fuzzy search, use `arkcli models search`.
+- `--name` is a case-insensitive substring filter. For exact details, use `models get <id>`.
 - Combine with `--transform` to extract a field, such as `--transform 'items.0.name'`.
-- For statistics/inventory, do not fall back to Raw API Explorer just because a server-side filter is missing. Prefer `--page-all --format json`, followed by local filtering.
+- Select the correct public-catalog, custom-asset, Endpoint, or Plan command before pagination and filtering. A missing filter does not justify querying another resource class or guessing a Raw API.
 
 ## References
 

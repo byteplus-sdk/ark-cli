@@ -91,6 +91,12 @@ arkcli agent session events send <session-id> --type user.message --text "Help m
   - `user.tool_result` is allowed only for `self_hosted` environments. Real execution checks `Config.Type` via `GetSession -> GetEnvironment`; `--dry-run` does not perform that read and does not prove the constraint is satisfied. Real execution and the server remain authoritative.
   - Raw payload can use snake_case; the PascalCase alias is normalized to snake_case before sending.
 
+### Remote tool confirmation
+
+When a remote Agent requests confirmation under `always_ask` or another policy, `requires_action` means waiting for the user, not successful execution. Present the actual pending tool name, redacted arguments, target, and side effects. Obtain an explicit allow/deny decision through the host, then send `user.tool_confirmation` to the same Session with the event's real `tool_use_id` and `result`. In non-TTY environments, do not treat the REPL `/allow` command as a shell command or default to allow without user input.
+
+Authorize only this tool invocation; do not silently relax the Agent's persistent policy. Continue observing the turn's terminal outcome after confirmation: acceptance is not tool success. Remote tool consent and the calling CLI's write confirmation are separate authorization layers and do not replace each other.
+
 ### Custom tool result
 
 `user.custom_tool_result` is used to return the result of a specific custom tool call, and it must include the corresponding `custom_tool_use_id`:

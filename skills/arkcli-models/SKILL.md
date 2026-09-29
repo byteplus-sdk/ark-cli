@@ -25,7 +25,7 @@ metadata:
 
 - The user wants to search, filter, or compare BytePlus ModelArk models.
 - The user wants to view model details, versions, context, modalities, or lifecycle states.
-- The user wants to count or list "my models", "custom models", or "recently created models".
+- Public foundation-model inventory; use arkcli-custommodel for uploaded/fine-tuned account assets and arkcli-plans for Coding Plan model lists.
 - The user wants to activate model / open model service / enable base | context-cache for a model.
 - Upstream `+chat` / `+gen` / `+deploy` needs to determine an available model name first.
 - The user asks whether voice models exist, which voice models are available, or what TTS/ASR models are called in the marketplace: answer only the marketplace search facts and the boundary that arkcli currently does not support downstream scenario capabilities.
@@ -84,7 +84,7 @@ This applies only to the **intent-ranking path**. Enumeration / inventory / stat
 
 - The user knows only a fuzzy model name / wants to find by intent ("strongest video model", "200K-context LLM", "model supporting thinking"): use `search`, which provides fuzzy keyword matching + structured modality/context/capability filtering.
 - To enumerate by modality / pagination parameters, or perform exact-name matching: use `list`.
-- The user asks "my models", "custom models", "how many were recently created", "list them", or "count them": this is model asset inventory, not candidate discovery. First read [`references/arkcli-models-list.md`](references/arkcli-models-list.md), use `arkcli models list --page-all`, and perform client-side filtering. Do not jump to Raw API Explorer.
+- Public catalog inventory uses `models list --page-all`; uploaded/fine-tuned account models use `custommodel list/get`; Coding Plan availability uses `plans model-list --plan <plan>`. Clarify ambiguous "my models"; do not substitute the public catalog for account assets.
 - A specific model ID is already known: use `get`.
 - The purpose is only to find a model for `+chat` / `+gen` / `+deploy`: return to the original task immediately after finding it.
 - The user **proactively** wants to activate a foundation model ("activate dola-seed-2-1-turbo first", "preview the activation request first"): use `activate`, first reading [`references/arkcli-models-activate.md`](references/arkcli-models-activate.md). If the user only wants to deploy / create an endpoint, let deploy / infer-create trigger implicit activation and do not activate it separately first.
@@ -95,7 +95,7 @@ This applies only to the **intent-ranking path**. Enumeration / inventory / stat
 2. When the user's description includes intent (modality / numeric capacity / capability), use `arkcli models search` + corresponding flags (`--modality`, `--min-context-window`, `--capability`, and others).
 3. When the user knows only a fuzzy name, still use `arkcli models search <keyword>` (returns all matches by default, without pagination).
 4. To fully enumerate by modality or calculate pagination statistics, use `arkcli models list`.
-5. When the user asks for "custom models/my models created in the past N days", use `arkcli models list --page-all --sort-by CreateTime --sort-order Desc --format json`, then locally filter by `create_time`, `model_type` / `customization_type` / `source_type`, and other fields. Do not explore `arkcli api --list` merely because there is no time-filter flag.
+5. For recently created custom/account models, use arkcli-custommodel and its actual output schema. Only public catalog date inventory uses `models list --page-all`.
 6. When a specific model ID is known and details are needed, use `arkcli models get`.
 7. When the user explicitly wants model activation (proactive activation, not immediate deployment), use `arkcli models activate <name> [--sub-services ...]`; add `--yes` in CI and use `--dry-run` only for local request preview, never as server validation.
 8. After finding / activating the model, return to the upstream workflow that initiated it: `+chat` / `+gen` / `+deploy`.
@@ -104,7 +104,7 @@ This applies only to the **intent-ranking path**. Enumeration / inventory / stat
 
 ### 0. Complete the full model ID for data-plane commands (required prerequisite)
 
-The `--model` argument for `+chat` / `+gen` must use the full `<name>-<primary_version>` form (or Endpoint ID `ep-xxx`). **Passing only the family name triggers `InvalidEndpointOrModel.NotFound` 404.**
+Preserve exact Endpoint/Custom Model IDs and valid Coding Plan invocation names returned by the current resource catalog. Build `<name>-<primary_version>` only when a versioned foundation-model ID is required. A Plan output name or routing alias must not receive a guessed date suffix. Follow the owning skill execution context; catalog discovery does not prove account access.
 
 The **`primary_version` format is not fixed**. **Do not use a regex to decide whether it "looks like a full ID".** Formats actually observed (about half of ~152 models do not use six digits):
 
@@ -154,6 +154,15 @@ arkcli models search --multimodal --output-modality text --strict-filter
 ```
 
 Adding `--strict-filter` is strongly recommended: the default behavior is "retain missing data" (to avoid false negatives); strict returns only models that satisfy the conditions with 100% certainty.
+
+## Evidence and token units
+
+For parameter support, unlisted-parameter behavior, search/get conflicts, or NotFound, read [the get evidence rules](references/arkcli-models-get.md#parameter-evidence-and-conflicting-queries). Missing fields are not negative evidence; preserve conflicting sources separately. Public catalogs cannot inventory account-owned custom assets.
+
+- Public catalog metadata does not prove deployment, console availability, valid credentials, balance, or permissions. Resolve Endpoint bindings first; a Custom Model's base lineage must not replace its actual `cm-*` binding.
+- A missing/null capability is unknown, not support. Read the exact `api_support` item; text output does not disprove image input.
+- Keep the exact `context_window` integer for filtering. Display 131072 as 128K, 262144 as 256K, and 1048576 as 1M tokens, with the exact number alongside. Use binary units; use the exact integer when no clean abbreviation applies.
+- Exact IDs/versions use `get` directly; fuzzy discovery uses `search`. Do not guess version suffixes or repeatedly activate models to repair an unresolved ID.
 
 ## Common fallbacks
 
@@ -274,7 +283,7 @@ The following behaviors are wrong. Choosing the wrong command prevents the Agent
 - ❌ **Do not omit the keyword from `search` merely to "view the five most popular models"**. Omitting the keyword now returns **all 152 entries** sorted by UpdateTime descending; it is no longer a curated popular list. Use `--size 5` for a small result.
 - ❌ **Do not recommend a model with `lifecycle_status="Retiring"` for new integration**. Although still callable, the vendor has marked it for retirement. Proactively warn the user and search for a newer version.
 - ❌ **Do not perform client-side secondary filtering on `search` to compensate for list limitations**. Use `search`'s built-in `--modality` / `--min-context-window` / `--capability` flags directly.
-- ❌ **Do not call `get` directly for one model without trying `search`**. `search <name>` returns all candidates + enrichment in one call. Use `get` only when pricing/rate limits/detailed capability descriptions are needed.
+- For fuzzy names, use `search` to discover candidates and reuse its enrichment. For an exact model ID/version, call `get` directly when details are needed; a preliminary search is not mandatory.
 - ❌ **Do not explore Raw APIs with `arkcli api --list` merely because `models list` has no server-side time-filter flag**. First run `models list --page-all --format json`, then filter local JSON by `create_time`.
 - ❌ **Do not tell the user "the CLI does not have this capability; use the console"**, unless you have confirmed that the current `arkcli models list --help` truly has no enumerable output and local JSON filtering also cannot complete the requested statistics.
 
@@ -282,7 +291,7 @@ The only valid uses of `list`:
 - ✓ Perform **full enumeration/auditing** by `--modality` (not to "find the strongest").
 - ✓ Obtain statistics such as `total_count`.
 - ✓ Exact matching with `--name foo` (rarely needed by Agents because search also finds it).
-- ✓ Inventory assets such as "mine/custom/recently created": retrieve all with `--page-all`, then filter client-side by fields and time window.
+- ✓ Inventory the public catalog; use arkcli-custommodel for account-owned assets.
 
 ## References
 

@@ -55,10 +55,13 @@ is unavailable; `docs get` can read the same URL through its CDN pipeline.
 
 ## Check before answering
 
-Use `source_url` from a body read for citations when present: it is the actual
-public CDN Markdown source. Keep `url` plus `snapshot` for CLI continuation;
-do not pass the CDN source URL to `docs get`. Without `source_url` (for example
-MCP), use the returned `url`. An outline alone is not body evidence.
+For user-facing body citations, link the document title to the documentation-site
+`url` from that same body read, preserving any returned section anchor.
+`source_url` identifies the CDN Markdown actually read for evidence verification;
+provide it separately with a clear label only when the user needs raw Markdown
+or revision evidence. Keep `url` plus `snapshot` for CLI continuation, never
+pass `source_url` to `docs get`. MCP uses its returned `url`.
+An outline alone is not body evidence.
 
 - Check each requested point against the body. Read each comparison cell's
   text and image alt together with its row and column headings. Mark icons
@@ -89,6 +92,11 @@ MCP), use the returned `url`. An outline alone is not body evidence.
 - Before declaring a named section absent, inspect the page's complete
   outline. If DSL headings cannot be mapped reliably, read the complete page
   at the same revision. Search snippets and failed reads cannot prove absence.
+- For a named section of a supplied page, read that section on the supplied
+  page first. Do not substitute a similarly named separate page. Describe the
+  original section's links and examples as they appear; label a linked page as
+  an additional source. Say the original section contains only a link only if
+  the section you read actually contains no other content.
 - Cite each claim with the read-result URL that actually contains its evidence;
   do not substitute a page with a similar title. Every field-migration table
   row must be supported by a body or schema already read. Omit unverified
@@ -100,6 +108,12 @@ MCP), use the returned `url`. An outline alone is not body evidence.
   remove restrictions added by your summary. Answer once evidence is
   sufficient, without piling on cross-checks. State missing evidence instead
   of filling gaps from memory or claiming more chunks remain after finishing.
+- Before listing page N, actually execute that page of `docs list` or
+  `docs search` and inspect its returned `items` or `results`. If output was
+  saved to a file, read the complete JSON first. Page one's `has_more`,
+  `snapshot` and `next_offset` identify the next command, not page two's items.
+  If continuation did not run, report only pages read and the evidence gap;
+  never reconstruct later entries from memory or expected ordering.
 
 ## Six operating rules (they matter more than the flag table)
 
@@ -179,8 +193,9 @@ inspect its result before deciding whether another chunk is needed.
 - Treat the snapshot as opaque: copy it completely or extract it from saved
   JSON; never retype it. Continue only when `has_more=true`, using the returned
   `next_chunk_start`. At the end, report completion without guessing a chunk.
-- For pagination, prefer the saved-JSON example in `references/commands.md`
-  and extract the snapshot and next position programmatically. On failure,
+- For a small page, read each standalone `arkcli docs list` or `search` JSON
+  result directly. Save and read back the complete JSON only when output is
+  large, then extract its snapshot and next position. On failure,
   compare the actual arguments with the original response byte-for-byte.
   Correct transcription errors; do not drop the snapshot or blame the CDN
   or offset for a 404 caused by a changed locator.
@@ -253,6 +268,18 @@ inspect its result before deciding whether another chunk is needed.
   `requestBody`, schema `required` and referenced definitions inside `content`.
   A response-schema preview is insufficient. Read the saved full output and
   parse the inner JSON; report missing evidence if those fields are unavailable.
+- `apis spec` currently returns no documentation-site URL. To provide a parameter
+  documentation link, locate the operation name or title with `docs search` /
+  `docs list`, then use `docs get` to verify the same operation and parameter
+  page and cite its `url`. `api_path` is a request path, not a documentation
+  link. If no matching page is found, state the gap without inventing a URL
+  or attributing schema-only details to unverified body text.
+- Attribute each required API parameter to the schema or to body text actually
+  read. If the body chunk only covered `messages`, do not claim it also verified
+  `model`; a field appearing in an example does not establish that it is
+  required. Treat `externalDocs.url` inside a schema as a candidate link, not
+  a verified page: do not attach it as an additional confirmed reference
+  without checking its parameter page through the same product's `docs get`.
 - For large schemas, directly use the Python pipeline in `references/commands.md` to
   print request structures and required fields directly. `spec` has no
   `--output` flag; `--transform` only projects outer fields. `content` is a JSON
@@ -355,8 +382,9 @@ optional `breadcrumbs` and `updated_at`; top level carries `query`,
 carries `total` (visible catalog entries, **not** search candidates),
 `has_more`, `next_offset`, `revision`, `snapshot`, `next_action`.
 
-`get`: `title`, `breadcrumbs`, `url` (CLI document locator), `source_url` (the actual CDN Markdown source
-for body citations), `content`,
+`get`: `title`, `breadcrumbs`, `url` (documentation-site URL for user-facing
+citations and CLI document lookup), `source_url` (the actual CDN Markdown source
+for evidence verification), `content`,
 `chunks[]`, `total_chunks`, `has_more`, `next_chunk_start`, `revision`,
 `snapshot`, `next_action`, plus `section{id,title}` when `--section` is used.
 
