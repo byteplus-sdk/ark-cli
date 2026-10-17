@@ -44,7 +44,7 @@ Load command details only when needed:
 Do not use this Skill to decide whether a model, Endpoint, or business feature
 is supported. Route those questions to the matching BytePlus capability Skill.
 Do not run `auth apikey` when the user explicitly asks to inspect the key
-inventory. Before using `arkcli profile keys list`, explain that it may synchronize
+inventory. Before using `arkcli profile apikey list`, explain that it may synchronize
 remote keys and write back the local key inventory or default key;
 masked output does not make the Profile operation side-effect free.
 
@@ -122,7 +122,7 @@ for the current identity. A TTY requires confirmation; a non-interactive caller 
 only after the end user explicitly authorizes the write. The command issues
 one `CreateApiKey` request, performs at most three read-only status checks, and
 never prints the raw key. It does not create or repair Coding Plan Team seat
-keys. Use `profile keys refresh/use` when an existing Profile must switch its
+keys. Use `profile apikey refresh/use` when an existing Profile must switch its
 default key.
 
 - Inspect the current selected key through the masked `ark_api_key` field in
@@ -136,7 +136,7 @@ default key.
   or account-wide project scope falls back to `default`, and the name follows
   `api-key-YYYYMMDDHHmmss`. Declining or running without a TTY performs no
   mutation.
-- Use `arkcli profile keys list` only for an explicit Profile-management
+- Use `arkcli profile apikey list` only for an explicit Profile-management
   request. Before the command, explain that it can query the remote key source,
   reconcile live keys, write back the local inventory, and select or clear the
   stored default when membership changes. Masked output does not make it

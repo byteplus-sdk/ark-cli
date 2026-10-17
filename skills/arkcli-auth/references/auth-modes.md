@@ -37,14 +37,14 @@ Use this recovery sequence:
 2. If the key comes from the active profile, run:
 
    ```bash
-   arkcli profile keys refresh
+   arkcli profile apikey refresh
    ```
 
 3. Retry the original command once.
 4. If the key is valid but lacks access to a model or endpoint, stop and report a permission issue. Refreshing the same key does not grant new permissions.
 5. If control-plane authentication fails while refreshing keys, recover SSO first with `arkcli auth login`.
 
-`profile keys refresh` synchronizes existing backend keys; it does not rotate a
+`profile apikey refresh` synchronizes existing backend keys; it does not rotate a
 key or grant access. Use the BytePlus Coding Plan references for explicit key
 rotation or team-seat management.
 
@@ -58,11 +58,11 @@ Key sources and empty-result handling are profile-specific:
   `arkcli auth apikey create`. A non-interactive caller may add `--yes` only
   after explicit user authorization. The command creates once, verifies with
   at most three status reads, saves the key for the current identity, and never
-  prints its raw value. Use `profile keys refresh/use` to change an existing
+  prints its raw value. Use `profile apikey refresh/use` to change an existing
   Profile's default key.
 - `coding-plan-team` uses `GetSeatInfo.Result.ApiKey` from a Running seat. It is
   unrelated to the ordinary pool and cannot be repaired with `auth apikey`.
-- If `profile keys refresh` receives zero usable keys from the relevant source,
+- If `profile apikey refresh` receives zero usable keys from the relevant source,
   it fails and preserves the existing local key inventory and default key.
 - `auth apikey` only selects an ordinary key. Its `saved=true` result does not
   prove that a team-seat key is available.

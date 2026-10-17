@@ -81,7 +81,7 @@ authenticated BytePlus identity summary:
 arkcli auth whoami --format json
 ```
 
-Use `arkcli profile keys list --format json` only for explicit Profile key
+Use `arkcli profile apikey list --format json` only for explicit Profile key
 management after warning that it may synchronize remote keys and write back the
 local key inventory or default key.
 

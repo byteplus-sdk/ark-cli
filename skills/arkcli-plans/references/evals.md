@@ -143,3 +143,36 @@ Expected behavior:
 - Explain accurately: the current STS credentials lack `iam:ListUsers` permission.
 - Recommend the escape hatch: `--bind seat-id=user-id:user-name` (manually specify UserName and skip IAM lookup).
 - **Do not** ask the user to switch accounts or log in to SSO again (that does not necessarily change IAM permissions).
+
+## 8) Happy path: query plan model specifications
+
+Input:
+
+- "What are the context windows and maximum input/output lengths of the Coding Plan models?"
+- "Which Coding Plan models accept image or video input?"
+
+Expected behavior:
+
+- Use `arkcli plans model-list --plan <plan>` rather than switching to the global model catalog.
+- Explain first that `models[]` contains `ark-code-latest` route targets and `direct_models[].model_name` contains directly invocable ModelNames.
+- Read `context_window`, `max_input_tokens`, `max_completion_tokens`, `input_modalities`, and `load` from the relevant `models[]` or `direct_models[]` item.
+- Explain accurately that `max_completion_tokens` is the maximum output-token length.
+- When the interface omits a field, report that the specification is unavailable; do not infer it from the model name or overwrite it with another catalog.
+
+Input:
+
+- "Which Coding Plan names can I put directly in the model parameter?"
+
+Expected behavior:
+
+- Run `arkcli plans model-list --plan coding-plan --mode direct` so the unrelated LatestModel route-target interface is not queried.
+- Return or cite only `direct_models[].model_name`; do not treat `models[].output_name` as a directly invocable ModelName.
+
+Input:
+
+- "Which models can ark-code-latest route to in my Coding Plan?"
+
+Expected behavior:
+
+- Run `arkcli plans model-list --plan coding-plan --mode routing` so the unrelated VirtualModelID interface is not queried.
+- Read route candidates and current `selected` state only from `models[]`.

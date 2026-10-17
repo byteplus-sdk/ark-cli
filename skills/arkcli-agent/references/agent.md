@@ -171,8 +171,8 @@ arkcli +iterate agent-xxx \
   --format json
 ```
 
-- `--environment-id` / `--env-id` Optional;Omit CLI using the most recently created project in the current project Environment.Should be Explicitly Passed When Explicitly Required by Environment.
-- Don't assume the environment is provided by the user ID interrupt or request supplementary information:Actual Execution Time CLI Uses `ListEnvironments` By `CreateTime Desc, Limit=1` Automatic selection of latest environment;Only when there are no available environments,Then prompt to create an environment or explicitly provide one `--environment-id`.
+- `--environment-id` / `--env-id` is syntactically optional, but Skill execution should verify the Agent, Environment, and new Session belong to the same Project and pass an explicit environment ID. See [Session project consistency](session-files.md#session-project-consistency).
+- If no environment ID is supplied, query same-Project candidates first. Do not rely on automatic `ListEnvironments` selection with `CreateTime Desc, Limit=1`: account-wide context may select another project's environment. Ask the user when candidates remain ambiguous or no same-Project environment exists.
 - `--diff` does not call `ListEnvironments` and shows `<auto-select-latest-environment>` in `CreateSession.EnvironmentId`. This is a placeholder. `+iterate` does not register Client Preview `--dry-run`.
 - `--resource`, `--vault-id` / `--vault-ids`, `--tags` It will be passed to the new session.
 - `--diff` reads the current Agent online and previews `UpdateAgent`, `CreateSession`, and chat requests without remote mutation. It is a command-specific online diff, not zero-network Client Preview.
@@ -238,6 +238,8 @@ arkcli agent agent create \
 - Check that dry-run shows an object InputSchema and unchanged Properties, then create and read back with get. A declaration does not upload an executable implementation or make the CLI automatically execute arbitrary functions. Return results through the [custom tool result event](events-chat.md), using the corresponding `custom_tool_use_id`.
 
 ## Tool model bindings (supported tools only)
+
+For a Todo-only request, follow [Todo Write](todo-write.md) instead: it belongs to the multimodal toolset but needs neither model discovery nor Models. The binding workflow below does not apply to Todo.
 
 When creating an Agent, enter this discovery/configuration flow only if the user explicitly requests multimodal tools (such as image or video generation) or supplies such a tool configuration. Otherwise do not query `agent model list --usage tool` or add `agent_toolset_multimodal_20260825`, `image_generate`, `video_generate`, or their `Configs[].Models`. Multimodal model inputs, available tool-model candidates, or example fields do not imply a request for generation tools. Retain the ordinary default toolset when tools are unspecified; do not pass `--tool '[]'` to clear it. Preserve explicit user configurations rather than silently removing them under this rule.
 

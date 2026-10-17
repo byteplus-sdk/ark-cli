@@ -56,27 +56,44 @@ Use this order:
 
 If no authoritative contract is available, stop instead of guessing.
 
-## Data-plane fallback example
+## Data-plane fallback examples
 
-Embedding currently has a registered data-plane action and no dedicated
-product command:
+Embeddings have registered data-plane actions and no dedicated product
+command. Resolve a callable model id first — `arkcli models list
+--modality embed` lists versioned embedding model ids, or use an `ep-...`
+endpoint id from `arkcli resources list`. A display name or bare family
+name (e.g. `skylark-embedding`) returns 404
+`InvalidEndpointOrModel.NotFound`.
+
+Text embeddings (`/embeddings`, input is a string or array of strings):
 
 ```bash
 arkcli api arkruntime.create_embeddings \
-  --params '{"model":"<embedding-model-id>","input":"BytePlus Ark"}'
+  --params '{"model":"<text-embedding-model-id>","input":"BytePlus Ark"}'
 ```
-
-The active BytePlus profile must supply a usable API key. Use a model ID
-available to that profile.
 
 For stable downstream processing:
 
 ```bash
 arkcli api arkruntime.create_embeddings \
-  --params '{"model":"<embedding-model-id>","input":"BytePlus Ark"}' \
+  --params '{"model":"<text-embedding-model-id>","input":"BytePlus Ark"}' \
   --format json \
   --transform 'data.0.embedding'
 ```
+
+Multimodal embeddings (`/embeddings/multimodal`, one vector for the whole
+text + image + video bundle). Vision embedding models such as
+`skylark-embedding-vision-*` only support this action; sending them to
+`create_embeddings` returns 400 "`<model>` does not support this api":
+
+```bash
+arkcli api arkruntime.create_multimodal_embeddings \
+  --params '{"model":"<vision-embedding-model-id>","input":[{"type":"text","text":"BytePlus Ark"}]}'
+```
+
+The active BytePlus profile must supply a usable API key. A missing key now
+fails fast with a `missing_api_key` hint; a local proxy or DNS failure
+produces a `network_unreachable` hint.
 
 ## Authentication contract
 

@@ -46,10 +46,14 @@ status and page-one paging metadata do not prove page-two items. Run the next
 page in a separate `arkcli docs list` call, not inside a Python subprocess.
 Add the caller-attribution prefix to these examples.
 
-For body continuation, extract `url`, `snapshot` and `next_chunk_start` from the
-first get JSON, pass them to `docs get` with `--snapshot` and `--chunk-start`,
-and retain the original chunk count. Correct a changed locator first. If its
-original value cannot be recovered, restart at page zero without mixing revisions.
+For body continuation, check completion first. If the last successful response
+or the state explicitly supplied by the user has `has_more=false`, report that
+the read is complete and make no further Docs request. Missing original JSON,
+body or snapshot does not change that decision. A user-requested refresh or new
+read starts a separate read. Only at `has_more=true`, reuse the original `url`,
+`snapshot`, `next_chunk_start` and chunk count. Restart at chunk 0 only when unread
+content is still needed and its continuation locator cannot be recovered; do not
+combine revisions.
 
 ## Catalog counts and complete identifiers
 
@@ -254,7 +258,8 @@ documentation feature does not exist".
 
 - For user-facing citations, link the document title to the documentation-site
   `url` from the body read, preserving returned section anchors. `source_url`
-  records the CDN Markdown actually read for verification; show it separately
+  records the Markdown actually read for verification (the canonical `.md`
+  page for new reads, CDN for legacy snapshots); show it separately
   with a clear label only when raw Markdown or revision evidence is requested.
   CLI continuation still uses `url` and `snapshot`; MCP uses its returned `url`.
   An outline alone is not body evidence.

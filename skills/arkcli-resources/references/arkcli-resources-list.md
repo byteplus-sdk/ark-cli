@@ -18,9 +18,12 @@ profile.Type:
                → GetFoundationModel → task_types/filter_task_types;
                unknown stays visible with modality_confidence=unknown and a stderr warning)
   coding-plan
-    text     → ListArkCodeLatestModel (AccountID is required and derived from SSO)
+    text     → ListCodingPlanVirtualModelID (Edition=personal, BizInfo=PlanTier)
     image    → uses platform ListEndpoints + modality filter (S10, commit f69be53)
     video    → same as image
+  coding-plan-team
+    text     → ListCodingPlanVirtualModelID (Edition=enterprise, BizInfo=seat tier)
+    image/video → platform Endpoint pool; invocation requires a compatible pay-as-you-go API key
 ```
 
 ## Endpoint modality contract

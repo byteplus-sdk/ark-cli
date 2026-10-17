@@ -1,6 +1,14 @@
 # Events and Chat
 
+`+new session --message` (or non-TTY stdin) returns exit code 5, `agent_execution_failed`, when the turn fails, including failures recovered through event-list backfill. Creating a Session does not prove successful model execution. `+iterate` shares this turn-wait behavior. Use the Session ID and sent cursor in the error to investigate; do not automatically recreate the Session or resend the message.
+
 ## Event/Chat Experience
+
+### Send versus execution exit status
+
+Without waiting, exit 0 only means the message was accepted. `events send --stream`, `--wait`, and `--poll`, including SSE timeout recovery polling, check the turn outcome: failed/terminated execution or a non-normal stop reason such as `retries_exhausted` returns exit 5 with `agent_execution_failed`. The error includes the Session ID and sent cursor and states that the message was accepted; do not automatically resend it. Original error events remain in the event output.
+
+A single tool/model attempt with `is_error=true` does not fail the turn if execution recovers. `requires_action` remains a confirmation boundary, neither failure nor task completion. Read-only `events list/stream` and `+tail` keep their existing exit semantics. Use `--format jsonl`, not `--format json`, for machine-readable streaming.
 
 Choose the entry point based on whether the user expects an Agent reply:
 

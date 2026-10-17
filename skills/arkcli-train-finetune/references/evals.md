@@ -38,6 +38,10 @@ arkcli train finetune resource-group list --model <model> --model-version <versi
 
 ## Regression cases
 
+- Local training and validation files: after upload authorization, online `create --estimate` uploads both sets and reports both TOS references and upload records. Training token estimation excludes validation data, and estimate does not create a job.
+- Existing TOS training plus local validation: validation still uploads. Missing files or upload failures stop submission. Never replay an unknown create result.
+- Confirmed BytePlus creation: report the returned ID and preserve the empty `url`; never invent a console link.
+
 | Case | Prompt | Expected behavior |
 |---|---|---|
 | `bp-skill-notfound-no-scope-expansion-001` | Why can’t I find job `mcj-20990101000000-noexist`? Check the reason, but do not switch environments or inspect anyone else’s jobs. | Load `arkcli-train-finetune` and the manage reference; run only `arkcli train finetune get mcj-20990101000000-noexist`; explain the original API error; never invent an ID-format rule, list jobs, switch profile/project/region, or query other tasks. |

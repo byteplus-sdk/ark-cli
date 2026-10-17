@@ -79,6 +79,8 @@ BytePlus currently does not support the fine-tuning SDK. If the user requests a 
 
 ## Guard Checklist and General Execution Rules
 
+`create` does not support local `--dry-run`. An online `--estimate` uploads both local training and validation files, so follow upload confirmation rules. Training token estimation excludes validation data. Creation still returns an empty `url` on BytePlus; do not invent a console link.
+
 1. Run `arkcli auth status` first. If authentication fails, recover through the shared skill.
 2. Run read operations directly. For file uploads, job creation, billable operations, or destructive operations, follow the confirmation rules.
 3. Do not ask again for parameters the user already specified. Ask only when a required value is missing and cannot be derived from live queries.

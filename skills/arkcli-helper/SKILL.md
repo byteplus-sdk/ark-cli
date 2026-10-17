@@ -73,7 +73,10 @@ A Coding Plan model may be the routing model `ark-code-latest`. Switching its
 route target (Auto smart scheduling or a pinned underlying model) is outside
 this skill — use `arkcli plans model-apply --plan <plan> --model <target>`
 (see [`../arkcli-plans/`](../arkcli-plans/SKILL.md)); it writes the control
-plane and stays in sync with the console.
+plane and stays in sync with the console. When configuring a concrete model,
+use only the VirtualModelID catalog exposed as `direct_models[].model_name` by
+`plans model-list --mode direct`; do not treat LatestModel route
+candidates in `models[].output_name` as directly invocable ModelNames.
 
 ## Command Map
 
@@ -120,19 +123,19 @@ request
 
 - `platform`: `--endpoint <endpoint-id>` is required and `--model` is invalid.
 - `coding-plan` or `coding-plan-team`: `--endpoint` is invalid. `--model` is
-  optional; when omitted, arkcli uses the selected or first available plan
-  model.
+  optional; concrete choices come from the plan's VirtualModelID catalog. When
+  omitted, arkcli prefers the direct ModelName matching the current route and
+  otherwise uses `ark-code-latest` or the first direct model available.
 - `--profile` defaults to the active profile, but explicit profile selection is
   safer for automated or non-interactive work.
 - Plan configuration uses the API key stored with the selected profile.
   One-off API key overrides are not a substitute for a missing profile key.
-- ZCode writes model-specific ArkModels metadata to
+- ZCode writes model-specific metadata to
   `$ZCODE_HOME/v2/config.json`. It preserves `limit.context` exactly and
   normalizes binary-KiB `limit.output` values to the decimal token limit
-  enforced by the gateway. ArkModels authoritative values win; when a model is
-  missing from ArkModels (some third-party Plan models) or a field is zero, a
-  built-in Plan model capability table fills the gap, and only fields still
-  unknown after both steps are omitted. ZCode does not
+  enforced by the gateway. Plan API `ModelCapability` values win; ArkModels
+  fills only missing fields, then the built-in Plan model capability table may
+  fill fields still unknown. ZCode does not
   hot-reload its provider registry, so fully quit the ZCode process, reopen it,
   and start a new session after configuration.
 - `configure` writes immediately and does not install a missing client.
@@ -179,7 +182,7 @@ letters, digits, underscores, or hyphens.
   [`arkcli-auth`](../arkcli-auth/SKILL.md), then retry.
 - Wrong or unsupported profile: inspect and switch with
   [`arkcli-profile`](../arkcli-profile/SKILL.md).
-- Missing stored API key: first run `arkcli profile keys refresh`. For a
+- Missing stored API key: first run `arkcli profile apikey refresh`. For a
   personal `coding-plan`, `auth apikey` can select from the ordinary pool; for
   `coding-plan-team`, the key must come from a Running seat and the ordinary
   pool cannot repair it. An empty refresh preserves existing local keys.

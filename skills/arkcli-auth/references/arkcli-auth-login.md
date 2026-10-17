@@ -88,5 +88,5 @@ For an explicit request to provision an ordinary key, use
 environment, add `--yes` only after the end user explicitly authorizes the
 write. The command creates at most once, performs no more than three read-only
 status checks, saves the verified key for the current identity, and never
-prints the raw key. Use `profile keys refresh/use` to change an existing
+prints the raw key. Use `profile apikey refresh/use` to change an existing
 Profile's default key.

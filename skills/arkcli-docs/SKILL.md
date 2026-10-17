@@ -51,13 +51,13 @@ Choose the entry point from the request:
 
 Read supplied official docs URLs directly, including requests to summarize a
 link or check a section. A WebFetch failure does not establish that the body
-is unavailable; `docs get` can read the same URL through its CDN pipeline.
+is unavailable; `docs get` can read the same URL through its public documentation pipeline.
 
 ## Check before answering
 
 For user-facing body citations, link the document title to the documentation-site
 `url` from that same body read, preserving any returned section anchor.
-`source_url` identifies the CDN Markdown actually read for evidence verification;
+`source_url` identifies the Markdown actually read for evidence verification;
 provide it separately with a clear label only when the user needs raw Markdown
 or revision evidence. Keep `url` plus `snapshot` for CLI continuation, never
 pass `source_url` to `docs get`. MCP uses its returned `url`.
@@ -115,13 +115,20 @@ An outline alone is not body evidence.
   If continuation did not run, report only pages read and the evidence gap;
   never reconstruct later entries from memory or expected ordering.
 
+## Recovering from command errors
+
+- Read `error.hint` after `validation` or `not_found`. For a rejected URL that retains `/docs/<slug>`, first confirm the slug with `docs list --query "<slug>"`. Locate the document again using `url` returned by this product's `docs list` / `docs search`. Do not change hosts, guess slugs, or repeatedly pass a legacy CDN `source_url` to `docs get`. If the current catalog confirms absence, report it and stop reading that route.
+- For the public documentation backend, check the terminal state first. If the last successful response or the continuation state explicitly supplied by the user has `has_more=false`, explain that the read is complete and stop without `docs get/list/search`. Missing full response text, body or snapshot does not justify rereading a completed document unless the user explicitly requests a refresh or a new read. Continue only at `has_more=true`, using the exact `next_chunk_start` and snapshot. Restart at chunk 0 only when unread content is still needed and the original continuation state cannot be recovered; keep that new read separate. Explain the supplied fields and stopping decision without inventing network-request details.
+- Do not retry validation failures with identical input. If a correction still produces the same error, stop that branch and report the gap. Only transient network/service failures use the shared bounded retry policy. Route missing profiles/login to authentication first, and resolve missing MCP configuration for the current product/backend before another Docs call.
+
 ## Six operating rules (they matter more than the flag table)
 
 ### 1. search and get/list are separate pipelines with different availability
 
 - `search` goes through a signed OpenTOP action (control plane, requires the CLI
-  identity). `get` and `list` read the published catalog and Markdown from the
-  product CDN. Different backends, different rollout schedules, different
+  identity). `list` reads the published catalog from the product CDN. `get` reads the
+  canonical page URL with `.md` appended; legacy snapshot continuations keep
+  the immutable CDN body. Different backends, different rollout schedules, different
   failure domains.
 - **A failed or empty search is never evidence that the content does not exist.**
   Fall back to `arkcli docs list --query "<original query>"` and filter the
@@ -156,11 +163,14 @@ An outline alone is not body evidence.
   result. If no body can be retrieved, say plainly that the page is unreadable
   right now.
 
-### 3. The body still contains undowngraded custom DSL
+### 3. The body may contain custom DSL
 
-Published Markdown has frontmatter stripped and the H1 restored, but it **keeps
-the documentation site's custom layout tags**, and the CLI does not downgrade
-them. A 9 KB page can easily contain dozens. Expect:
+The public backend reads the canonical page URL with `.md` appended. Common
+layout components are serialized into standard Markdown: quoted notices,
+parallel Tab sections and standard links. Tabs represent alternative recipes;
+read the relevant one without merging alternatives into one workflow. Legacy
+snapshots and embedded content may still **keep custom layout tags**; the CLI
+does not downgrade them. Expect:
 
 `<Card>`, `<Columns>`, `<ColumnsItem>`, `<Tabs>`, `<Tab>`, `<Note>`, `<Tip>`,
 `<Warning>`, `<Danger>`, `<APILink>`, `<Attachment>`, `<RenderMd>`,
@@ -186,8 +196,10 @@ These rules apply to the public backend. MCP continues with
 without a snapshot or a pinned-revision claim. Generate only the next read;
 inspect its result before deciding whether another chunk is needed.
 
-- A `snapshot` pins both the published revision and the chunk boundaries. It is
-  the only correct way to continue a read.
+- A `snapshot` pins the catalog revision, body digest and chunk boundaries.
+  It is the only correct way to continue a read. When the mutable `.md` body or
+  published document changes, continuation returns `snapshot_expired`; restart
+  instead of mixing revisions.
 - Continuation must reuse the **same** snapshot; it is mandatory whenever
   `--chunk-start > 0`.
 - Treat the snapshot as opaque: copy it completely or extract it from saved
@@ -205,7 +217,7 @@ inspect its result before deciding whether another chunk is needed.
 - When selecting a section from an outline, pass that outline's `--snapshot`
   together with `--section` so its anchor and body use the same revision.
 - For another chunk within that section, retain
-  `--section "#<returned section.id>"` and use the **new v2 snapshot returned by
+  `--section "#<returned section.id>"` and use the **new snapshot returned by
   the section read** with its `next_chunk_start`. Do not reuse the outline's
   page snapshot or drop the section and apply its offset to the whole page.
   Before the section response exists, recommend only its first-chunk read.
@@ -219,7 +231,7 @@ inspect its result before deciding whether another chunk is needed.
   and `--offset` and start at the first page). **Do not guess an offset and do
   not concatenate content
   from different revisions.**
-- `--section` returns a v2 section snapshot **bound to that heading**. It cannot
+- `--section` returns a section snapshot **bound to that heading**. It cannot
   read a different section or document, and it **must not be passed to
   `docs list`**. To start another section, drop the old snapshot and begin at
   chunk 0.
@@ -286,7 +298,8 @@ inspect its result before deciding whether another chunk is needed.
   string: parse it with `json.loads` rather than stopping because it is not a
   dict. Saving a file still requires reading and printing its request
   structures; file sizes or outer keys are not request-field evidence.
-- `search` stays on OpenTOP. `get` and `list` stay on the documentation CDN.
+- `search` stays on OpenTOP. `list` stays on the documentation CDN; `get` reads the page
+  URL with `.md` appended.
   Do not move those commands to fetch an API contract.
 - Any of `--api-mcp-url`, `ARK_DOCS_API_MCP_URL`, `--docs-mcp-url`,
   `ARK_DOCS_MCP_URL`, or `ARK_MCP_URL` selects MCP for `apis` and skips the
@@ -383,7 +396,7 @@ carries `total` (visible catalog entries, **not** search candidates),
 `has_more`, `next_offset`, `revision`, `snapshot`, `next_action`.
 
 `get`: `title`, `breadcrumbs`, `url` (documentation-site URL for user-facing
-citations and CLI document lookup), `source_url` (the actual CDN Markdown source
+citations and CLI document lookup), `source_url` (the actual Markdown source
 for evidence verification), `content`,
 `chunks[]`, `total_chunks`, `has_more`, `next_chunk_start`, `revision`,
 `snapshot`, `next_action`, plus `section{id,title}` when `--section` is used.

@@ -23,7 +23,7 @@ metadata:
 - For a read-only identity/default-resource check with no exact resource ID and an empty list, report the confirmed facts and missing information, then stop. Do not fall back to `profile show/list/keys list` to fill gaps. An empty list does not authorize configuration repair or key synchronization.
 - `invocable` and `required_overrides` describe Profile/resource compatibility; `invocable=true` does not prove that the API key is usable, unexpired, authorized, or has remaining quota. Confirm credential context separately and respect the actual data-plane result.
 - `arkcli resources resolve <ep-id>` checks `endpoint_model_type` before interpreting model references. For a Custom Model Endpoint, `model_id` and `custom_model_id` remain the bound `cm-...` identity; `base_model_*` is lineage and capability metadata only.
-- Dispatch follows profile.Type: platform → `ListEndpoints`; coding-plan → the corresponding plan API.
+- Dispatch follows profile.Type: platform → `ListEndpoints`; coding-plan text → `ListCodingPlanVirtualModelID` with the profile's `Edition + PlanTier (BizInfo)`.
 - `coding-plan-team` uses its team-seat key for plan text models. Image/video discovery uses the platform Endpoint pool, but invocation requires a compatible pay-as-you-go API key; a visible Endpoint does not make the seat key compatible.
 - This skill does not change defaults. When the user wants to change a default, use `profile set-default` from [`../arkcli-profile/SKILL.md`](../arkcli-profile/SKILL.md).
 - `--profile X` genuinely switches identity (P0-A correction): the control-plane request uses X's token / UserID, rather than making the request as active=A and merely displaying B's resources.
@@ -101,7 +101,7 @@ In short, `resources list` discovers resources and compatibility under the curre
 ## Common errors
 
 - Under a coding-plan profile, image/video discovery uses the platform Endpoint pool. Check the pay-as-you-go key requirement before invoking an Endpoint. An empty list requires scope/permission diagnosis and exact resolution of a known target; creation is a separate user intent owned by Deploy Skill.
-- `coding-plan resources list: missing AccountID (run arkcli auth login first)` → Only the text path requires AccountID. SSO is not logged in, or claims.Sub is empty while parsing the token; run `arkcli auth login` again.
+- `plan profile is missing an active profile name` / `load plan tier ...` → The Coding Plan profile has no persisted tier for `BizInfo`. Inspect it with `arkcli profile show`, then refresh or recreate it through the Profile Skill; do not issue an unscoped model-list request.
 - `ListEndpoints: NotLogin / Unauthorized` → Login state/STS expired, or profile X supplied through `--profile X` has no token in the identity store; run `auth login` first.
 - `unsupported profile type "X" for resources list` → inspect the effective context with `auth whoami`, then route to Config/Profile Skill for diagnosis. Do not recreate or change the profile without user intent.
 

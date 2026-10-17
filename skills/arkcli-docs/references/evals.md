@@ -60,6 +60,8 @@ ARKCLI_NO_UPDATE_NOTIFIER=1 ARKCLI_CALLER_TYPE=ai_agent ARKCLI_CALLER_NAME=<agen
 | Asked about restrictions, but the outline has no matching heading | Read the page introduction, parent section and relevant Tip / Warning / Note contents; missing headings do not prove missing restrictions |
 | The source states a constraint without explaining its cause | Answer with the constraint; obtain evidence before adding causes or adjacent capabilities |
 | User wants "the code example from the docs" and it sits inside `<Tab>` | Extract the fenced code block, not the `<Tab>` wrapper |
+| The body has sibling `**Tab: Python**` / `**Tab: Go**` sections | Pick the section for the user's language; never merge the tabs into one procedure |
+| A restriction sits in a blockquote that starts with `> **Warning**` | Treat it like body text and preserve the restriction and its conditions; never skip it because it is a blockquote |
 | `--section` returns `section_unavailable` on a DSL-dense page | Explain that per-section reading is unsupported there and read the full page |
 | A code example spans several chunks | Concatenate `content` in order before interpreting; never execute it or claim it is complete |
 
@@ -182,3 +184,14 @@ ARKCLI_NO_UPDATE_NOTIFIER=1 ARKCLI_CALLER_TYPE=ai_agent ARKCLI_CALLER_NAME=<agen
 - Role-dependent message schemas require content for some roles, while another
   permits content or tool calls: keep the branches separate; never conclude that
   every message requires content.
+
+## Recovery regression scenarios
+
+| Scenario | Expected behavior |
+|---|---|
+| A legacy CDN Markdown URL is rejected | Read error.hint; locate the page through current-product list/search and use its returned url; do not invent a host or slug |
+| Last response has has_more=false, but a further chunk read fails | Stop reading; do not increment the offset or repeat the failed call |
+| Public-backend continuation state is lost and unread content is still needed | Restart at chunk 0 only when no completed state is known; keep the new snapshot separate |
+| has_more=false is known but the full body or snapshot is unavailable | Stop without another Docs call; do not reread merely to reconstruct a completed response |
+| Corrected input produces the same validation error | Stop this branch and report the evidence gap instead of retrying indefinitely |
+| Profile/login or MCP configuration is missing | Resolve authentication/configuration before another Docs request; do not switch products |

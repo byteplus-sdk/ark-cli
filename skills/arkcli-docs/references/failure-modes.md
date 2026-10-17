@@ -46,13 +46,18 @@ manual cache cleanup is needed; rerun normally after the upstream is fixed.
 
 ## Degradation caused by custom DSL
 
-Published Markdown keeps the documentation site's custom tags (`<Card>`,
+Common layout components in the canonical `.md` are serialized into standard
+Markdown: quoted notices, sibling `**Tab: …**` sections and standard links.
+Prerequisites and restrictions in notices matter as much as body text. Pick
+the tab for the user's setup; never merge alternatives into one workflow.
+
+Legacy snapshots and embedded content may still keep custom tags (`<Card>`,
 `<Columns>`, `<ColumnsItem>`, `<Tabs>`, `<Tab>`, `<Note>`, `<Tip>`, `<Warning>`,
 `<Danger>`, `<APILink>`, `<Attachment>`, `<RenderMd>`, `<span id>`, and inline
 links carrying a trailing attribute block such as `{target="_self"}`). The CLI
 does not downgrade them.
 
-Consequences and handling:
+Consequences and handling when raw tags remain:
 
 - **`--section` can fail**: headings inside custom tags never reach the Markdown
   AST, which surfaces as `section_unavailable`. Read the full page instead.

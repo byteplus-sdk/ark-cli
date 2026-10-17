@@ -36,7 +36,7 @@ Prompt:
 
 Expected behavior:
 
-- Explain first that `arkcli profile keys list --format json` may synchronize
+- Explain first that `arkcli profile apikey list --format json` may synchronize
   remote keys and write back the local key inventory or default key, then use it
   only because the user explicitly requested Profile key management.
 - Do not run the interactive, state-changing `arkcli auth apikey`.
@@ -78,5 +78,5 @@ Expected behavior:
 - Treat the result as an ordinary-pool key only; do not claim that a Coding
   Plan Team seat key was created or repaired.
 - Do not claim that an existing Profile's default key changed; use
-  `profile keys refresh/use` for that separate request.
+  `profile apikey refresh/use` for that separate request.
 - Never expose the raw API key in output.

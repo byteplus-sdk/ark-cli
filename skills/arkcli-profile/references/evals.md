@@ -74,7 +74,7 @@ Expected result:
 
 Prompt:
 
-> `profile keys refresh` found no Coding Plan Team key, but `auth apikey`
+> `profile apikey refresh` found no Coding Plan Team key, but `auth apikey`
 > returned `saved=true`. Did that repair the team profile?
 
 Expected behavior:

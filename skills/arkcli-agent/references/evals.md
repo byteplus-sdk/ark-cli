@@ -1,5 +1,22 @@
 # arkcli-agent 2026-08 evaluations
 
+## Todo configuration decisions
+
+- Add only Todo to an existing Agent: get first, merge into the multimodal toolset, and use DefaultConfig.Enabled=false only when adding a new Todo-only toolset. Preserve base tools, skip tool-model discovery, and omit Models.
+- Existing image generation and always_ask policies: adding/disabling Todo preserves DefaultConfig, model bindings, and permissions without duplicating the toolset.
+- Todo in a base toolset: correct its placement, not its configuration name to TodoWrite. Permission/availability rejection stops the workflow; do not infer BytePlus rollout from Volc or bypass through Raw API.
+- Successful configuration readback without tool events is configuration verification only, not a successful runtime invocation.
+
+## Message execution exit status
+
+- `+new session --message` creates a Session but model retries exhaust with exit 5: report failed execution, retain the Session ID/cursor, and do not claim success or automatically resend.
+- Given an explicit MA endpoint and temporary key, mount with `session resources add` and verify with `resources list/get`; do not use the BYOK model URL or require changing the global profile.
+
+- Invalid BYOK credential: after model failure and `retries_exhausted`, `events send --stream/--wait/--poll` returns exit 5 and `agent_execution_failed`; report accepted delivery but failed execution, without automatic resend.
+- SSE timeout recovery: a `session.error` seen before polling must remain a failure when polling later receives idle.
+- A tool error followed by normal `end_turn` does not fail the whole turn; report `requires_action` as pending confirmation, not completion.
+- Without waiting, exit 0 means accepted delivery only, not a successful model reply.
+
 ## Model runtime metadata
 
 - "What thinking modes and service tiers does this model support?": resolve the selected item's `name`, call `agent model config <name>`, explain the parameters, and report supported/default values from `Key/Data`.
@@ -15,6 +32,12 @@
 - An explicit key and URL are supplied with a plan profile: preserve the URL and allow data-plane execution; control-plane steps still require login. Reject a URL without an explicit key. Report server authentication failures without credential fallback. For BytePlus stg, require a verified data-plane URL instead of assuming `--env stg` changes the standard data-plane endpoint.
 - Preview succeeds under a plan profile: report an offline plan only, not execution eligibility. Stop on `managed_agent_profile_required` without replaying writes.
 
+## Session Creation Project Consistency
+
+- An account-wide query returns an Agent in Project A and the newest Environment in Project B: do not create with that pair; resolve the new Session's project context and explicitly select an Environment in A.
+- An Environment or another project-scoped dependency belongs elsewhere or has unknown ownership: read/confirm first; account visibility, overrides, and successful previews do not waive the check. Do not silently change the default profile.
+- All project-scoped dependencies match the target Project: create with its Platform profile and read back project and bindings. Cover `session create`, `+new session`, and `+iterate`.
+
 ## Existing Session upgrades
 
 - "Preview changing this existing Session's model": use session upgrade --model ... --dry-run with zero network; do not update the Agent resource, recreate the Session, or inject compact.
@@ -23,7 +46,7 @@
 - "Update environment variables/packages": explain merge semantics and that empty objects do not clear old entries; do not send Sandbox fields for self-hosted or switch environment IDs.
 - "Refresh Vault": send only the existing binding set; do not create credentials or change bindings. Initial events are optional and --compact is opt-in.
 - "It returned upgrading, did it succeed?": report acceptance only, read back status and target model/version/configuration, and do not invent task polling. Inspect ambiguous outcomes before retrying and do not send messages during upgrade.
-- "Use model connection settings": upgrade supports provider/protocol/base_url/headers; do not apply creation-override filtering. Keep Authorization/API Keys out of preview output and reports.
+- BYOK: preserve explicit model connection fields in Agent create/update, Session overrides, and upgrade. Use `--model-header-env` only on events send, compact, or +new session; never put secrets into static Headers. Preview reads references only.
 
 ## Self-hosted operations
 
@@ -67,7 +90,7 @@ Expected behavior:
 - Choose `Thinking`, `ReasoningEffort`, and `ServiceTier` from the selected model's metadata, not from assumptions about the base model.
 - Use only `auto`, `default`, or `fast` for `ServiceTier`; never generate `priority`, and omit `fast` when the selected model does not support it.
 - Read back `Result.Agent.Model` after creation to verify the model ID and runtime parameters. Resolving `auto` to the effective `default` does not mean the field was dropped. Send a minimal message to verify inference with the selected model.
-- Keep only `Id/Speed/Thinking/ReasoningEffort/ServiceTier` in the final request's `Model`; filter `Provider/Protocol/BaseUrl/Headers` and any other undefined fields without a local error.
+- BYOK: preserve explicit model connection fields in Agent create/update, Session overrides, and upgrade. Use `--model-header-env` only on events send, compact, or +new session; never put secrets into static Headers. Preview reads references only.
 - Inline overrides, `@file`, and `AgentWithOverrides` in the general `session create --file` payload produce the same canonical request. Explicit empty overrides return a validation error and never panic.
 - A runtime-model-only `+iterate` update hydrates the current `Model.Id`. With a Session Agent override, keep the version in `AgentWithOverrides.Version` and omit top-level `AgentId/AgentVersion`. A display-name-only change must still execute UpdateAgent.
 

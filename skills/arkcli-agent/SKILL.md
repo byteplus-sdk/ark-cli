@@ -26,6 +26,8 @@ current account configuration, resource state, or model availability. Reuse comp
 a name/grep miss does not prove absence. Identify whether the target is an Agent, Environment,
 or Session; use a supplied exact ID directly instead of listing everything.
 
+For an explicitly requested self-hosted endpoint or BYOK model, this release covers Direct access. Read [BYOK configuration and request credentials](references/byok.md), separating MA and upstream environments, URLs, and keys. Do not force a third-party model into ArkModels or silently select an Ark model instead.
+
 | Input | Required Handling |
 | --- | --- |
 | No primary Agent model specified | Start with `arkcli agent model list --format json` and read all candidates; do not add query by default, truncate results, or invent IDs. Fetch exact-version metadata only for explicit context/modality/capability requirements |
@@ -33,8 +35,8 @@ or Session; use a supplied exact ID directly instead of listing everything.
 | No skill specified | Search the current account's custom skills first; `ark` and `all` are available for read-only discovery, while Market/SkillHub is not |
 | Local skill zip provided | Run `agent skill create --zip`, then use the returned `skill-...` ID and version when creating the Agent |
 | No tools specified | Let the CLI inject the complete default toolset; an explicit `--tool` replaces the full default array |
-| No explicit request for multimodal tools | Do not query tool models or add a multimodal toolset, image_generate/video_generate, or their Models. Retain ordinary default tools; a model's multimodal input support is not permission to add generation tools |
-| No environment specified | When creating a Session, select the latest environment in the current project; ask for one only if none is available |
+| No explicit request for tool model bindings | Do not query tool models or add image_generate/video_generate or their Models. Retain ordinary defaults. An explicit Todo request follows [Todo configuration](references/todo-write.md) without enabling generation tools |
+| No environment specified | Resolve the Session's actual Project, select an Environment in that Project, and pass its ID explicitly; never take the latest account-wide result. See [project consistency](references/session-files.md#session-project-consistency) |
 | Agent created | Read it back with `agent agent get <agent-id> --format json` and report the final Model, System, Tools, Skills, MCP servers, and extension fields |
 | The user expects a reply | Use `+new session ... --message` or `events send ... --stream` for short work; use `--poll` or cursor-based event polling for large or long-running work |
 
@@ -43,6 +45,7 @@ or Session; use a supplied exact ID directly instead of listing everything.
 | User Intent | Preferred Command | Details |
 | --- | --- | --- |
 | Create/Update/Delete Managed Agent | `arkcli agent agent ...` | [`references/agent.md`](references/agent.md) |
+| Enable/Disable the Todo Planning Tool | `agent agent create/update --tool`; not a base toolset member, no Models | [`references/todo-write.md`](references/todo-write.md) |
 | Copy an Existing Agent and Rename/Modify Configuration | `arkcli +new-agent --fork <agent-id> [--name <new-name>]` | [`references/agent.md`](references/agent.md#Copy-agent) |
 | Choose Available Models for Creating an Agent | `arkcli agent model list` | [`references/agent.md`](references/agent.md#model selection) |
 | Choose Models for Tools Supporting Bindings, Such as Image/Video Generation | `arkcli agent model list --usage tool` | [`references/agent.md`](references/agent.md#discover-tool-models-and-cache-behavior) |
@@ -124,7 +127,7 @@ or Session; use a supplied exact ID directly instead of listing everything.
 | `arkcli agent agent list/get/create/update/delete/versions` | CRUD for Managed Agents and versions |
 | `arkcli agent model list` | Default: primary models whose `items[].model` goes into `--model`. With `--usage tool`, use it for `Configs[].Models[].ID`. Optional `--query` enriches details and ranking |
 | `arkcli +new-agent` | Enhanced entry for creating an Agent; supports `--fork/--from` to copy an existing Agent and create a new one |
-| `arkcli +iterate` | Update Agent configuration, create a new Session, and run one-shot/REPL; `--environment-id/--env-id` can be omitted, and the latest environment will be chosen automatically |
+| `arkcli +iterate` | Update Agent configuration, create a new Session, and run one-shot/REPL; verify project consistency and explicitly pass a same-Project `--environment-id/--env-id` |
 | `arkcli agent skill search/list/get/create/update/delete/versions/download/set-protection/github` | Query custom/Ark skills, import GitHub skills, control custom-skill protection, manage versions, or delete in dependency order; BytePlus defaults `list/search` to `--source custom` and rejects only Market/SkillHub |
 | `arkcli agent env list/get/create/update/delete` | CRUD for Environment |
 | `arkcli agent session list/get/create/update/delete` | CRUD for Session |

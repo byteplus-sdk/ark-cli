@@ -1,5 +1,12 @@
 # Interface Links and Gap
 
+## Current Integration Boundaries
+
+- BYOK model fields and per-request credentials are supported; see [byok.md](byok.md). Dream commands are not available in this product. Keep the default `agent_toolset_20260701`; do not infer availability of newer toolsets from another product's UI.
+- Todo Write uses `--tool`, is not a base-toolset member, and needs no Models. Read [Todo configuration](todo-write.md) for a Todo-only entry, product availability boundaries, and updates that preserve other tools.
+- A backend search-provider change does not add a CLI flag or authorize changing existing web_search configuration. Verify returned configuration and actual tool results. Preserve raw JSON for unknown event/tool-result shapes instead of dropping them because pretty rendering is unavailable.
+- Keep existing MA activation checks and confirmation; do not invent activation Actions. Internal trace/kernel-event access, main/subagent headers, outbound allowlists, and Nacos/TLS changes do not become user commands. PE tool's public contract is unconfirmed.
+
 ## Interface Links
 
 - Agent: `CreateAgent` / `GetAgent` / `ListAgents` / `UpdateAgent` / `DeleteAgent` / `ListAgentVersions`

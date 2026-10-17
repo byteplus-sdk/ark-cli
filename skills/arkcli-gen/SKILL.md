@@ -42,6 +42,11 @@ explicit --modality > output_modalities > task types > unknown
   Endpoint metadata, calls generation APIs, downloads files, or opens an
   application. Pass `--modality image|video` for an unknown model or Endpoint;
   online-only routing is reported as `unresolved` with `fidelity=partial`.
+- Execute exactly one `arkcli +gen ... --dry-run` for one preview request.
+  After a successful `preview.v1` response, deliver it and stop immediately;
+  explain `steps`, `unresolved`, `fidelity`, and explicit parameters from that
+  response. Do not run `+gen --help`, change flags and retry, or repeat the same
+  dry-run to reconfirm a successful preview.
 
 ## Use cases
 

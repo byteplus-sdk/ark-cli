@@ -30,7 +30,7 @@ If given only a versioned model identifier, match its `model` in `agent model li
 | `reasoning_effort` | Reasoning effort; some models support values such as `low`, `medium`, or `high`. | `reasoning_effort.support_value`, `reasoning_effort.default` |
 | `service_tier` | Model serving tier; some models support values such as `default`, `fast`, or `auto`. This is not CLI plan selection. | `service_tier.support_value`, `service_tier.default` |
 
-These values are illustrative, not a universal enum. Read speed values directly from the target model response as well. `protocol` describes model protocol information; it does not authorize changing the server-managed `Protocol` field.
+These values are illustrative, not universal enums. Read the selected model's metadata rather than guessing. Third-party Protocol and connection settings follow the explicit [BYOK contract](byok.md); Ark metadata does not establish a third-party model's capabilities.
 
 For example, `Key: "thinking.support_value", Data: ["enabled", "disabled"]` and `Key: "thinking.default", Data: ["enabled"]` declare those supported values and that default for the queried model only.
 

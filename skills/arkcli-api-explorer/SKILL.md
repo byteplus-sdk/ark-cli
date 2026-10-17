@@ -93,13 +93,18 @@ arkcli api <registered-action> --params '<json-object>' --dry-run
 Example of a data-plane fallback without a dedicated product command:
 
 ```bash
+# Text embeddings (/embeddings); discover the versioned model id first:
+#   arkcli models list --modality embed
 arkcli api arkruntime.create_embeddings \
-  --params '{"model":"<embedding-model-id>","input":"BytePlus Ark"}' \
+  --params '{"model":"<text-embedding-model-id>","input":"BytePlus Ark"}' \
   --transform 'data.0.embedding'
 ```
 
-Replace the model placeholder with an ID available to the active BytePlus
-profile.
+Replace the model placeholder with a versioned ID available to the active
+BytePlus profile (not a display name or bare family name). Vision/multimodal
+embedding models (e.g. `skylark-embedding-vision-*`) cannot use this action:
+they return 400 "does not support this api" and must go through
+`arkruntime.create_multimodal_embeddings` (`/embeddings/multimodal`).
 
 ## Authentication and verification
 

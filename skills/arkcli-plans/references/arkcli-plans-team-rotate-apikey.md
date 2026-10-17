@@ -55,7 +55,7 @@ in chat. Move it directly to the approved secret destination, then refresh the
 affected local profile if it still references the invalidated key:
 
 ```bash
-arkcli profile keys refresh --profile <profile-name>
+arkcli profile apikey refresh --profile <profile-name>
 ```
 
 Report only masked key suffixes, SeatIDs, counts, and failure reasons.

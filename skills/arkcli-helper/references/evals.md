@@ -155,12 +155,12 @@ Expected behavior:
 - For a personal `coding-plan`, route recovery to:
 
 ```bash
-arkcli profile keys refresh
+arkcli profile apikey refresh
 arkcli auth apikey
 ```
 
 - For `coding-plan-team`, require a Running seat and use
-  `profile keys refresh`; do not use `auth apikey`, because it only selects the
+  `profile apikey refresh`; do not use `auth apikey`, because it only selects the
   ordinary pool.
 - State that an empty refresh fails without clearing the existing local key
   inventory or default key.
@@ -287,6 +287,20 @@ arkcli helper configure pi \
 
 - Report the Pi settings paths `~/.pi/agent/models.json` and
   `~/.pi/agent/settings.json` and the required reload.
+
+## 15a. Direct ModelName Source
+
+Prompt:
+
+> Configure Codex with a concrete model from my Coding Plan, not smart routing.
+
+Expected behavior:
+
+- Use only a ModelName from `direct_models[].model_name` returned by `plans model-list --mode direct`.
+- Do not infer direct invocation support from LatestModel
+  `models[].output_name`.
+- The persisted Agent catalog contains direct ModelNames plus the synthetic
+  `ark-code-latest` entry, not the route-target list.
 
 ## 16. Anti-trigger: Pi Has No MCP Host
 

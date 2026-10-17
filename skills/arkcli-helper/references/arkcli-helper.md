@@ -103,15 +103,17 @@ For a plan profile:
 
 - `--endpoint` is invalid;
 - `--model` is optional;
-- if `--model` is omitted, arkcli uses the selected or first model available
-  from that profile;
+- concrete `--model` values come from the plan VirtualModelID catalog, not the
+  LatestModel route-target list;
+- if `--model` is omitted, arkcli prefers the direct ModelName matching the
+  current route, then `ark-code-latest`, then the first direct model available;
 - the selected profile must contain its stored default API key.
 
 If a personal `coding-plan` stored key is missing, refresh its ordinary key
 inventory and, when interactive selection is needed, use:
 
 ```bash
-arkcli profile keys refresh
+arkcli profile apikey refresh
 arkcli auth apikey
 ```
 
@@ -127,8 +129,10 @@ Helper plan configuration.
 ### ZCode model limits
 
 `helper configure zcode` writes `$ZCODE_HOME/v2/config.json` (default
-`$HOME/.zcode/v2/config.json`). Each model limit comes from ArkModels metadata;
-Helper does not apply a uniform fallback or infer limits from model names.
+`$HOME/.zcode/v2/config.json`). For Plan models, each limit comes first from
+the Plan API `ModelCapability`; ArkModels fills only missing fields, followed
+by the built-in compatibility table for fields still unknown. Helper does not
+apply a uniform limit or dynamically infer limits from model names.
 
 - `limit.context` preserves `context_window` exactly for ZCode context
   accounting and compaction.
@@ -139,6 +143,11 @@ Helper does not apply a uniform fallback or infer limits from model names.
 - A missing field is omitted independently. If both fields are unknown, the
   entire `limit` object is omitted. `ark-code-latest` does not inherit a
   static model limit when authoritative target metadata is unavailable.
+
+The interactive smart-routing picker uses only LatestModel route candidates.
+The concrete-model picker and persisted Agent model catalog use only
+VirtualModelID entries, plus a synthetic `ark-code-latest` entry. Load labels
+are shown only for `Load.Status=1` with `Load.Level=1/2/3`.
 
 For an `InvalidParameter` 400 caused by an old ZCode output limit, upgrade
 ArkCLI, rerun the original `arkcli helper configure zcode ...` command, and
@@ -265,7 +274,7 @@ explicit confirmation before running it.
 | Parent command cannot prompt | No interactive TTY is available. | Use `arkcli helper configure <harness> ...`. |
 | Login or session error | The selected operation needs a valid BytePlus identity. | Run `arkcli auth login`, then retry. |
 | Unsupported profile type | Helper accepts only Platform, Coding Plan, and Coding Plan Team profiles. | Use `arkcli auth whoami --format json` for the current summary. If the user explicitly asks to switch, explain that Profile reads may synchronize remote keys and write back local key state before entering the `arkcli-profile` workflow. |
-| Missing personal Coding Plan API key | The selected personal plan profile has no usable ordinary-pool key. | Run `arkcli profile keys refresh`; use `arkcli auth apikey` only to interactively select an ordinary key. |
+| Missing personal Coding Plan API key | The selected personal plan profile has no usable ordinary-pool key. | Run `arkcli profile apikey refresh`; use `arkcli auth apikey` only to interactively select an ordinary key. |
 | Missing Coding Plan Team API key | No usable key was returned for a Running team seat. | Restore or assign the seat, then refresh. Do not use `auth apikey`; its ordinary pool is unrelated. |
 | No user-owned Endpoint | No eligible Endpoint belongs to the current sub-user. | Run `arkcli infer endpoint create`. |
 | Endpoint is not Running | The selected Endpoint cannot serve requests. | Run `arkcli infer endpoint start <endpoint-id>`. |

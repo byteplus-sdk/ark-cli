@@ -1,4 +1,4 @@
-# `arkcli profile keys`
+# `arkcli profile apikey`
 
 Read [`../SKILL.md`](../SKILL.md) first.
 
@@ -24,8 +24,8 @@ write the inventory or select/clear the local default. Masking protects output
 secrets; it does not make this operation side-effect free.
 
 ```bash
-arkcli profile keys list --format json
-arkcli profile keys list \
+arkcli profile apikey list --format json
+arkcli profile apikey list \
   --profile platform_ap-southeast-1_accountwide \
   --format json
 ```
@@ -61,14 +61,14 @@ safe selection:
 Prefer the 1-based index returned by `keys list`:
 
 ```bash
-arkcli profile keys use 2
-arkcli profile keys use 2 --profile <profile-name>
+arkcli profile apikey use 2
+arkcli profile apikey use 2 --profile <profile-name>
 ```
 
 A complete, unmasked key is also accepted for compatibility:
 
 ```bash
-arkcli profile keys use <complete-api-key>
+arkcli profile apikey use <complete-api-key>
 ```
 
 The selected key must already exist in the profile's available-key inventory.
@@ -78,8 +78,8 @@ and masked `new_default`.
 ## Refresh keys
 
 ```bash
-arkcli profile keys refresh
-arkcli profile keys refresh --profile <profile-name>
+arkcli profile apikey refresh
+arkcli profile apikey refresh --profile <profile-name>
 ```
 
 Refresh uses the target profile's BytePlus identity and the key source required

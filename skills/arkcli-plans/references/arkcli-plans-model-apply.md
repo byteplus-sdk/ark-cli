@@ -46,13 +46,13 @@ arkcli plans model-apply --plan coding-plan-team --model doubao-seed-code-251028
 
 ## Notes
 
-- **Valid targets come from the [`plans model-list`](arkcli-plans-model-list.md) output**; an out-of-list `--model` fails with `does not support route target` plus the available options
+- **Valid targets come from `models[]` in the [`plans model-list --mode routing`](arkcli-plans-model-list.md) output**; an out-of-list `--model` fails with `does not support route target` plus the available options
 - Team plans (`coding-plan-team`) are scoped to the **current identity's seat**: the command errors when the account holds no active seat — subscribe a seat in the console first
-- After writing, the CLI re-reads the model list to verify; while the control plane is still syncing, a mismatch only prints a stderr `warn` and does not change the exit code — double-check with `plans model-list`
+- After writing, the CLI re-reads the model list to verify; while the control plane is still syncing, a mismatch only prints a stderr `warn` and does not change the exit code — double-check with `plans model-list --mode routing`
 - This command only changes the route target; it does not touch local agent configuration. To switch the model used by local agents, see `helper configure --model` in [`../../arkcli-helper/SKILL.md`](../../arkcli-helper/SKILL.md)
 
 ## See Also
 
 - [arkcli-plans](../SKILL.md) — skill overview
-- [`plans model-list`](arkcli-plans-model-list.md) — list valid route targets and the active one
+- [`plans model-list --mode routing`](arkcli-plans-model-list.md) — query only valid route targets and the active one
 - [arkcli-shared](../../arkcli-shared/SKILL.md)

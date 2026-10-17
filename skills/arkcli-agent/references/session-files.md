@@ -1,6 +1,17 @@
 # Session and Files
 
+`session resources list/get/add` are data-plane commands and accept explicit `--api-key` / `--base-url`. An explicit URL requires an explicit key and must target the MA data plane, not the BYOK model's BaseUrl. With only an explicit key, use the standard MA endpoint for the current product, Region and environment, not a plan route. Control-plane authentication for `session create/get` is unchanged.
+
 ## Env / Session
+
+### Session Project Consistency
+
+When creating a Session through `session create`, `+new session`, or `+iterate`, the selected Agent, Environment, and other project-scoped dependencies must belong to the same Project as the Session. Overrides do not waive this requirement.
+
+- Check the selected Platform profile's project context with `auth status`, then verify actual `ProjectName` values from resource list/get responses. `account-wide` is a query scope, not a concrete Project or proof that returned resources share one.
+- If the target Project is unresolved, ownership is missing, or projects conflict, perform the relevant read or ask the user before creating. Do not infer ownership from names, account membership, visibility, or creation time. Do not invent a ProjectName for resources without project ownership.
+- Filter Environment candidates to the same Project before selecting, and explicitly pass `--environment-id` (or `--env-id` where supported). Do not rely on the latest account-wide environment. If no same-Project candidate exists, obtain confirmation to create one in the target Project instead of borrowing another project's resource.
+- Create with a verified project-scoped Platform profile. If none exists, follow the Profile skill; do not silently change the global default or invent a global `--project-name`. Read the Session back to verify its project and bindings; a successful preview does not establish project consistency.
 
 ```bash
 arkcli agent env create --name arkcli-<domain>-env-<timestamp> --config '{Type: cloud, Networking: {Type: unrestricted}}' --format json
@@ -61,9 +72,9 @@ arkcli agent session create \
 
 `--agent-overrides` maps to `AgentWithOverrides`; `--environment-overrides` maps to `Environment`. If an override omits `Id`, the CLI fills it from `--agent-id` or `--environment-id`. These are one-of request variants, so the CLI removes the corresponding `AgentId`/`AgentVersion` or `EnvironmentId` from the final request. Do not use `--agent` and `--agent-overrides` together. `arkcli +new session` and `arkcli +iterate` accept the same override flags.
 
-`AgentWithOverrides.Model` supports only `Id`, `Speed`, `Thinking`, `ReasoningEffort`, and `ServiceTier`. `Id` may select a different model for the Session. ArkCLI removes `Provider`, `Protocol`, `BaseUrl`, `Headers`, and any other undefined Model fields from the final request instead of failing locally; do not rely on removed fields taking effect. Validate `Thinking`, `ReasoningEffort`, and `ServiceTier` against the **selected model's** metadata because supported values vary by model. Managed Agent uses the `ServiceTier` product values `auto`, `default`, and `fast`; it does not use `priority`. Do not infer or map a priority concept from another product. The service may resolve `auto` to the effective `default` value when the Session is read back; that is not evidence that the override was dropped. If target-model metadata is unavailable, omit uncertain runtime parameters and let the service apply model defaults.
+`AgentWithOverrides.Model` supports `Id/Provider/Protocol/BaseUrl/Headers/TokenLimits/InputModalities` and `Speed/Thinking/ReasoningEffort/ServiceTier`. Explicit connection fields are no longer filtered. See [BYOK](byok.md) for types, omission semantics, and request credentials. Use the selected model's capabilities; do not invent defaults or equate persistence with successful inference.
 
-The same normalization and Model-field filtering applies to `--agent-overrides`, `--agent-overrides @file`, and `AgentWithOverrides` supplied through the general `session create --file` payload. Explicit empty values such as `--agent-overrides=` or `--environment-overrides=` are invalid; ArkCLI returns a validation error and does not create a Session.
+The same model-structure normalization applies to `--agent-overrides`, `--agent-overrides @file`, and `AgentWithOverrides` supplied through the general `session create --file` payload. Explicit empty values such as `--agent-overrides=` or `--environment-overrides=` are invalid; ArkCLI returns a validation error and does not create a Session.
 
 ### Environment Status Filtering
 
@@ -99,6 +110,12 @@ Complex resources belong to `session create --resource`, not the file-only `sess
 - The archive lives on the CLI host. Inspect potentially sensitive messages/code/business data before delivery; a remote sandbox path is not a file on the user's computer. Do not automatically upload or publish diagnostics.
 
 ## Files and Session Resources
+
+### Inspect Mounted Resources
+
+Read `agent session get <session-id>`, then `agent session resources list <session-id>`. Use `resources get` with the resource/file ID or mount-path selector from its help for a single item, and `agent file get <file-id>` for file metadata. Mounted resources are not a complete Sandbox directory tree, and file get does not download content. Do not invent filesystem traversal or internal storage commands when a public read API is unavailable.
+
+For memory mounts, use the returned store ID with `agent memory-store get`, `memories list`, and `memories get --view full`. The default basic view excludes content. After a path update, use the returned ID and Path instead of assuming the old ID remains valid. Never connect to OV internal storage or bypass resource/account authorization.
 
 - Upload local files to the Files API: `arkcli agent file upload --path ./data.csv --purpose user_data --wait-active`.
 - Register with URLs/TOS: `arkcli agent file upload --url https://... --purpose user_data` or `--url tos://bucket/path/file --tos '{bucket: b, prefix: arkfiles/}'`.

@@ -119,7 +119,7 @@ positional project name, it loads the selectable BytePlus projects and includes
 | `arkcli profile delete <profile>` | Delete a local profile; use `--yes` only after confirmation. |
 | `arkcli profile rename <profile> --to <display-name>` | Change only the display label, not the internal profile key. |
 | `arkcli profile project [<project-name>]` | Replace the Platform project slice and refresh Coding Plan profiles. |
-| `arkcli profile keys list|use|refresh` | Inspect, select, or synchronize the profile-specific ordinary or team-seat API key source; an empty refresh fails without clearing local keys. |
+| `arkcli profile apikey list|use|refresh` | Inspect, select, or synchronize the profile-specific ordinary or team-seat API key source; an empty refresh fails without clearing local keys. |
 | `arkcli profile models list|refresh` | Inspect or refresh Coding Plan model defaults. |
 | `arkcli profile set-default <id>` | Save a default resource for one modality. |
 

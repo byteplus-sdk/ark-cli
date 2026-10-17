@@ -1,5 +1,9 @@
 # Create a Fine-Tuning Job
 
+Both `--train-file` and `--validation-file` upload to TOS before an online `--estimate` or real submission. The resolved `data.TrainingSet` and `data.ValidationSet` use `TosBucket` and `TosPaths`; local paths are not sent to the server. `uploaded_files` includes both sets, while training token estimation uses only the training set. Local validation files also upload when training data already uses a TOS reference. An upload failure stops submission. `--estimate` uploads files without creating a training job.
+
+Creation still returns `id` and `url`. BytePlus continues to return an empty `url`; do not invent a console link.
+
 - Follow the sequence below. If the user provides insufficient information, query current capabilities and make recommendations.
 - If the user has already specified the model, version, training data, customization type (`--type`), and either explicit hyperparameters or a default strategy, first validate the model and capability as required in section 1, then run `create --estimate` directly to obtain the online estimate. If the estimate fails or returns insufficient information, query the relevant command according to the error.
 - Wait for user confirmation before the real `create` operation.

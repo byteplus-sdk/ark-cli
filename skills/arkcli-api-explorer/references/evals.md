@@ -68,12 +68,18 @@ Expected behavior:
 
 ```bash
 arkcli api arkruntime.create_embeddings \
-  --params '{"model":"<embedding-model-id>","input":"BytePlus Ark"}'
+  --params '{"model":"<text-embedding-model-id>","input":"BytePlus Ark"}'
 ```
 
-- Require a model ID available to the active BytePlus profile.
+- Resolve a callable versioned model id first (`arkcli models list
+  --modality embed`, or an `ep-...` from `arkcli resources list`); never
+  invent or hardcode a dated model id, a display name, or a bare family
+  name.
 - Require a usable profile API key.
 - Offer `--transform 'data.0.embedding'` when only the vector is needed.
+- Route vision/multimodal models (e.g. `skylark-embedding-vision-*`) to
+  `arkruntime.create_multimodal_embeddings` instead; a 400 "does not
+  support this api" on the text endpoint means the wrong action was used.
 
 ## 6. Authentication and configuration diversion
 
