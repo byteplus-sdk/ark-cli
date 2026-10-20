@@ -28,7 +28,13 @@ response byte-for-byte and correct differences using the saved JSON. Do not
 drop the snapshot while retaining the offset. If the exact original value
 still fails, report that read failure without claiming a known CDN incident.
 
+For continuation `validation`, also verify that the snapshot was copied completely, including its ending. Correct a copying difference once from the last successful JSON while keeping the URL and next_chunk_start. Never guess missing characters or repeat identical parameters. If the exact value still fails or is unavailable, report the unread gap; do not restart when the user forbids rereading.
+
+A continuation correction must reuse the original successful body snapshot. Never replace it with a new outline or catalog snapshot, even at the same revision.
+
 ## Read errors
+
+A rejected document URL can carry a concrete catalog lookup in `error.hint`. Use that command before selecting a matching returned page URL; never fetch the rejected host or rewrite it into a guessed route. No match means stop. Missing profiles and expired credentials require authentication, not another catalog/search retry.
 
 | `error.type` | Meaning | Handling |
 |---|---|---|
@@ -69,9 +75,11 @@ Consequences and handling when raw tags remain:
 
 ## Bounded retry rules
 
+For an official Volc/BytePlus Docs request using the default backend, an unexpected MCP-required error can indicate an older CLI without the built-in backend. Check the actual executable version and product, then route version checks to `arkcli-shared`. Explain an upgrade and subsequent Skill sync when needed; do not retry Docs or change MCP configuration to mask a version mismatch, and do not upgrade without authorization. Explicitly selected MCP backends keep their normal configuration flow.
+
 - Network-class errors (`network`, `service_unavailable`, `rate_limit`): at most 2 backoff
   retries.
-- `auth`, `not_found`, `validation`, `invalid_response`, `section_*`: **never retry**; they will not
+- `auth`, `not_found`, `validation`, `invalid_response`, `section_*`: **never retry identical parameters**; the snapshot copying correction above is a different input. They will not
   change on a second attempt.
 - Never loop `get` on the same missing route, and never guess a hash or CDN URL
   to retrieve withdrawn content.

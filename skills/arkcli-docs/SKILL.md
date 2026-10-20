@@ -38,6 +38,8 @@ Handle explicit official-docs requests and delegated product-knowledge gaps.
 Confirm the user's final goal using the negative-trigger table below. Never
 treat docs as the fallback for not knowing which command to use.
 
+**Preserve the requested retrieval mode.** When the user asks to search official docs without supplying a path, the first business command must be `docs search`. A page size only sets `--top-k N`; it does not select catalog filtering. Fall back to `docs list` only after this search returns an error or zero hits.
+
 Choose the entry point from the request:
 
 | Request | First business command |
@@ -117,7 +119,12 @@ An outline alone is not body evidence.
 
 ## Recovering from command errors
 
+- Explain only the rejection cause established by the CLI. Canonical documentation `.md` URLs are supported; one rejected URL does not establish that the `.md` suffix is unsupported.
+
+- A rejected URL may include a concrete `arkcli docs list --query ... --limit 20` command in `error.hint`. Execute that catalog lookup, then copy a matching returned `url` and snapshot for the body read. The extracted slug is only a query, not a verified page. No match means stop this branch; a rejected URL does not authorize changing MCP configuration.
+
 - Read `error.hint` after `validation` or `not_found`. For a rejected URL that retains `/docs/<slug>`, first confirm the slug with `docs list --query "<slug>"`. Locate the document again using `url` returned by this product's `docs list` / `docs search`. Do not change hosts, guess slugs, or repeatedly pass a legacy CDN `source_url` to `docs get`. If the current catalog confirms absence, report it and stop reading that route.
+- The original tool JSON is the continuation state. Do not unnecessarily rewrite a long snapshot in the answer or recover it from your own summary on the next turn. A snapshot is an opaque complete string. Copy it exactly from the last successful JSON, including its final characters; never decode, reconstruct, abbreviate, or guess it. On continuation `validation`, compare the submitted value with that response. If copying changed it, correct it once from the last successful body JSON and retain the URL, next_chunk_start, and chunk-count; this is a parameter correction, not an identical retry. Never obtain a new snapshot through --outline, list, or search to continue an old body. An equal catalog revision does not prove body identity. If the exact original still fails or is unavailable, stop and report the unread gap. Never guess a snapshot or restart at chunk 0 when the user forbids rereading.
 - For the public documentation backend, check the terminal state first. If the last successful response or the continuation state explicitly supplied by the user has `has_more=false`, explain that the read is complete and stop without `docs get/list/search`. Missing full response text, body or snapshot does not justify rereading a completed document unless the user explicitly requests a refresh or a new read. Continue only at `has_more=true`, using the exact `next_chunk_start` and snapshot. Restart at chunk 0 only when unread content is still needed and the original continuation state cannot be recovered; keep that new read separate. Explain the supplied fields and stopping decision without inventing network-request details.
 - Do not retry validation failures with identical input. If a correction still produces the same error, stop that branch and report the gap. Only transient network/service failures use the shared bounded retry policy. Route missing profiles/login to authentication first, and resolve missing MCP configuration for the current product/backend before another Docs call.
 

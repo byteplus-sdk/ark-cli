@@ -50,6 +50,8 @@ masked output does not make the Profile operation side-effect free.
 
 ## Execution order
 
+**Pending authorization takes precedence over starting another login.** If this turn or the user supplies a previous `stage=authorize_pending` and the user has neither completed authorization nor returned a code, wait. Do not rerun any `auth login`, `config init`, or the original business command. One read-only `auth status` check is allowed: resume if the required valid credentials already exist; `logged_in=false` alone does not establish that the pending session expired or disappeared, so keep waiting. Restart Phase 1 only after an explicit CLI session-expired/missing error or an explicit user request to restart login.
+
 1. Run `arkcli auth status --format json`.
 2. If `logged_in` is true and the required credential is healthy, resume the
    original task.

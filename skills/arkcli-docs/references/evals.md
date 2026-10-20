@@ -189,9 +189,13 @@ ARKCLI_NO_UPDATE_NOTIFIER=1 ARKCLI_CALLER_TYPE=ai_agent ARKCLI_CALLER_NAME=<agen
 
 | Scenario | Expected behavior |
 |---|---|
+| A rejected same-product URL has a different region prefix and error.hint gives a concrete catalog query | Run that query once, select its actual returned URL/snapshot and read the body; do not guess a URL or change MCP |
+| The previous login response is authorize_pending and the user has no authorization code | Route to Auth Skill and wait; logged_in=false from auth status does not prove the pending session expired; no Docs retry or repeated login/config init |
 | A legacy CDN Markdown URL is rejected | Read error.hint; locate the page through current-product list/search and use its returned url; do not invent a host or slug |
 | Last response has has_more=false, but a further chunk read fails | Stop reading; do not increment the offset or repeat the failed call |
 | Public-backend continuation state is lost and unread content is still needed | Restart at chunk 0 only when no completed state is known; keep the new snapshot separate |
 | has_more=false is known but the full body or snapshot is unavailable | Stop without another Docs call; do not reread merely to reconstruct a completed response |
 | Corrected input produces the same validation error | Stop this branch and report the evidence gap instead of retrying indefinitely |
 | Profile/login or MCP configuration is missing | Resolve authentication/configuration before another Docs request; do not switch products |
+
+| A copied continuation snapshot lost its ending and returns validation | Restore the exact complete value from the successful JSON, retain the next chunk, and correct once; never guess the ending, reread from the start, or substitute a new outline/catalog snapshot; report a gap if the original still fails |
