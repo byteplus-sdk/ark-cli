@@ -14,6 +14,7 @@ arkcli train finetune list [flags]
 | `--phase` | Filter by job phase; repeatable |
 | `--customization-type` | Filter by backend customization type; repeatable. Check `--help` when enum values are uncertain. |
 | `--create-time-after`, `--create-time-before` | Filter by creation time using RFC3339 |
+| `--mine` | Only include jobs created by the current SSO sub-user; server-side `TagFilters=[{Key:"sys:ark:createdBy", Values:["IAMUser/<uid>/<name>"]}]` |
 | `--page-size`, `--page-number` | Paginate manually. Page number defaults to 1 and must be `>=1`; page size defaults to 100 and must be in `1-100`. |
 | `--page-all`, `--page-limit` | Paginate automatically; always set a reasonable limit |
 | `--sort-by`, `--sort-order` | Sort results |
@@ -33,6 +34,7 @@ arkcli train finetune list --help
 - Job phase.
 - Customization type.
 - Creation time range.
+- Creator. When the user says "mine / my jobs / jobs I created", add `--mine`; do not list the whole account and guess the creator locally.
 - Pagination and sorting.
 
 3. If the user requests all results, use the current CLI's automatic pagination parameters and set a reasonable page limit. Never fetch without a bound.
@@ -55,12 +57,17 @@ Do not automatically call `get` for every listed job. Query a job only when the 
 arkcli train finetune list
 arkcli train finetune list --name <keyword>
 arkcli train finetune list --phase <phase>
+arkcli train finetune list --mine --page-all --page-size 100
 arkcli train finetune list \
   --create-time-after <RFC3339> \
   --create-time-before <RFC3339>
 ```
 
 Obtain phase and customization-type enum values from the current `--help`; do not maintain a static list.
+
+`--mine` depends on an SSO sub-user identity and the `sys:ark:createdBy` resource tag. A degraded identity
+without an ARK IAM `UserID` gets an explicit unsupported error. Do not fake an empty tag or silently return
+account-wide rows as "mine".
 
 ## Time handling
 

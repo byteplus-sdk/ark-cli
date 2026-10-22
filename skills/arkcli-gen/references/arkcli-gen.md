@@ -31,6 +31,34 @@ A successful `+gen` proves only that CLI workflow succeeded; it may have normali
 >
 > If you have just run `models search/list`, you can directly reuse the returned `primary_version` parameter without calling `get` again.
 
+## Video input roles: first frame / first-last frames / multi-reference (required reading)
+
+Seedance 2.x and similar services validate `content[].role` strictly. Do not rely on "the first image is
+the first frame" to infer the mode. Choose one mode from the user's intent before writing roles:
+
+| User intent | Recommended form | Notes |
+|---|---|---|
+| Single first frame (I2V) | `--input first_frame:@start.jpg` | The image is the starting frame |
+| First + last frames | `--input first_frame:@start.jpg --input last_frame:@end.jpg` | Each image constrains one end |
+| Multi-reference (subject/clothing/scene/style) | `--input reference_image:@ref1.jpg --input reference_image:@ref2.jpg` | Every image is a reference; the first one is **not** a first frame |
+| Reference video (R2V / continuation) | `--input reference_video:@ref.mp4`, optionally plus `--input reference_image:@person.jpg` | The video must be explicitly `reference_video` |
+
+Hard rules:
+
+- When generating commands, prefer the SDK role names `first_frame:` / `last_frame:` / `reference_image:` /
+  `reference_video:` / `reference_audio:`. The `first:` / `last:` / `ref:` forms are CLI aliases; do not mix
+  both dialects in one command, and do not rely on positional inference.
+- In a request carrying video or audio, every asset needs an explicit role. A missing image role is rejected
+  with HTTP 400 (`role must be specified for image contents`); a missing video role is rejected with
+  `reference media mode requires video role to be reference_video`.
+- Seedance 2.0 rejects mixing first-frame/first-last-frame mode with multi-reference mode. Do not send both
+  `first_frame` and `reference_image` unless the exact model capability explicitly allows it.
+- If the user supplies multiple images without saying which are first/last frames, confirm the roles before
+  submitting. Do not assume the first image is a first frame.
+- "Use this image as a reference" means `reference_image:`. Use `first_frame:` only for "start from this image"
+  or "make this the first frame". Do not probe role semantics by submitting paid tasks; check the model
+  metadata first, and use a local `--dry-run` when command shape needs verification.
+
 ```bash
 # 1) Text-to-image (T2I) — Seedream model
 arkcli +gen --model seedream-5-0-260128 "Minimalist business laptop, dark blue, white background"
@@ -51,24 +79,24 @@ arkcli +gen --model seedream-5-0-260128 --image-count 4 "Four style variants of 
 # 3) Text-to-video (T2V)
 arkcli +gen --model dreamina-seedance-2-0-260128 "A Shiba Inu running under cherry blossom trees, slow motion"
 
-# 4) Image-to-video / first-frame-to-video (I2V) — the first image is used as the first frame by default
+# 4) Image-to-video / first-frame-to-video (I2V) — prefer explicit first_frame
 arkcli +gen --model dreamina-seedance-2-0-260128 \
-  --input @first.jpg \
+  --input first_frame:@first.jpg \
   "The camera slowly pulls back while the subject stays still"
 
-# Explicitly specify first / last frames
+# First and last frames: explicit first_frame / last_frame
 arkcli +gen --model dreamina-seedance-2-0-260128 \
-  --input first:@start.jpg --input last:@end.jpg \
+  --input first_frame:@start.jpg --input last_frame:@end.jpg \
   "Generate tween animation between these two frames"
 
-# 5) Reference video (R2V) — use a video as a reference asset
+# 5) Reference video (R2V) — the video must be explicitly reference_video
 arkcli +gen --model dreamina-seedance-2-0-260128 \
-  --input ref:@reference.mp4 \
+  --input reference_video:@reference.mp4 \
   "Keep the motion path of the reference video and replace the main character with a robot"
 
 # 6) Reference audio — synchronize the video rhythm with the audio
 arkcli +gen --model dreamina-seedance-2-0-260128 \
-  --input ref:@beat.mp3 \
+  --input reference_audio:@beat.mp3 \
   "A montage of city night scenes that cuts to the beat"
 
 # Advanced flags — image tasks
@@ -98,7 +126,7 @@ arkcli +gen --model ep-20260416234150-zsd4v --modality video "A Shiba Inu is run
 | `<prompt>` |Yes| positional | Generation prompt (positional parameter, placed at the end of the command) |
 | `--model` | No| string | **Complete versioned model ID** (such as `seedream-5-0-260128` or `dreamina-seedance-2-0-260128`) or inference endpoint ID (`ep-xxx`). Passing only the family name will directly result in a 404 `InvalidEndpointOrModel.NotFound`.**Can be omitted in 0.1.16+**: when omitted, it falls back to the active profile's `Resources.<modality>.Default` based on `--modality`. If it is not set, a hint is reported to guide you to run `arkcli profile set-default --modality <m> <id>`. |
 | `--modality` | See description | string | Generation modality: `image` or `video`. Real calls use `explicit value > ArkModels output_modalities > FoundationModel task types > unknown`. |
-| `--input` | No| string (repeatable) | Reference asset references, added to content[] in the order they appear. Local file `@<path>` / remote `https://...` `tos://...` are all supported. **Local files (image/video/audio) are uploaded to TOS and replaced with a presigned https URL** that the backend fetches at submit time; `tos://<bucket>/<key>` is signed in place. Optional role prefixes — shorthand: `first:` `last:` `ref:` `none:`; SDK explicit forms: `first_frame:` `last_frame:` `reference_image:` `reference_video:` `reference_audio:`. `first:` / `last:` / `ref:` all resolve to a wire role, and they are written to `content[].role` (`ref:` is kind-agnostic, so it resolves to `reference_image` / `reference_video` / `reference_audio` by asset kind). Only an input with **no prefix at all** leaves the role empty for the server to infer by position. A request carrying a video must give that video an explicit `reference_video`, and every image in the same request needs a role too — otherwise the whole request is rejected with HTTP 400.**Image tasks**: folded into an image union. **Video tasks**: the first image is the first frame by default, other images are reference images. |
+| `--input` | No| string (repeatable) | Reference asset references, added to content[] in the order they appear. Local file `@<path>` / remote `https://...` `tos://...` are all supported. **Local files (image/video/audio) are uploaded to TOS and replaced with a presigned https URL** that the backend fetches at submit time; `tos://<bucket>/<key>` is signed in place. Prefer the SDK role names `first_frame:` `last_frame:` `reference_image:` `reference_video:` `reference_audio:`. The `first:` `last:` `ref:` `none:` forms are CLI aliases that resolve to wire roles (`ref:` resolves by asset kind). Only an input with **no prefix at all** leaves the role empty for the server to infer by position; a bare `@<path>` is only for single-image I2V when the model accepts positional inference, and cannot express multi-reference. A request carrying a video must give that video an explicit `reference_video`, and every image in the same request needs a role too — otherwise the whole request is rejected with HTTP 400. Whether first-frame and multi-reference modes may be mixed depends on the exact model's `supported_params` / `description`; Seedance 2.0 rejects the mix.**Image tasks**: folded into an image union. **Video tasks**: assign roles explicitly according to the user's intent. |
 | `--inline-local` | No| bool | Embed local `--input` files as base64 data URLs instead of uploading them to TOS. **Images only**: an inlined image reference works, but an inlined video/audio reference is **rejected outright** by the data plane (HTTP 400, `reference_video must be provided as a web url`, no task created). Use when object storage is unavailable or you deliberately want no upload; do not use it as the default. |
 | `--name` | No| string | Task name override |
 | `--version` | No| string | Model version override |
@@ -177,6 +205,9 @@ These parameters do not appear when the server does not return them (omitempty),
 | `Error code: 404 - InvalidEndpointOrModel.NotFound` | `--model` is a model family name (such as `seedream-5-0` or `dreamina-seedance-2-0`), and no family-name alias is registered for that family. | Use `arkcli models get <name> --transform 'primary_version'` to get the version number, concatenate it into `<name>-<primary_version>`, and then pass it. |
 | Missing prompt | Positional parameter not provided. | The prompt is a required positional parameter. |
 | `image generation failed: InvalidParameter` | Parameter error such as too few pixels in the image size. This is common with sizes such as `1024x1024`. | Use `1920x1920` or larger. Add `--debug` to view the underlying error if needed. |
+| `role must be specified for image contents` | An image in a multi-image or video-bearing request has no role. | Add `first_frame:` / `last_frame:` / `reference_image:` to every image; do not rely on positional defaults. |
+| `reference media mode requires video role to be reference_video` | The request carries a video without a role. | Use `reference_video:` for the video and `reference_image:` for auxiliary images. |
+| First-frame and multi-reference modes are rejected together | Both `first_frame` and `reference_image` were sent. | Choose one mode: first/last frames, or all `reference_image`. |
 | The video task has no result for a long time. | Video tasks are **asynchronous** by default and return `task_id` + `status: queued` (**not a failure**). | Use `arkcli gen get <task_id>` to poll until `succeeded`. **Do not** submit `+gen` again (that creates a new task). Use `+gen --wait` if you want to wait synchronously. |
 | `warn: auto-download failed: ...`(stderr) | Failed to download `output_url` (network / 403, etc.). | Does not block the main process. `output_url` is still returned, and the user can manually recover with `curl -o file.ext "<output_url>"` (note the 24h validity). |
 
@@ -185,7 +216,7 @@ These parameters do not appear when the server does not return them (omitempty),
 - The prompt is a positional parameter. Put it at the end of the command, and it is recommended to wrap it in quotes.
 - Model name, model version, display name, Endpoint name, and `ep-*` ID are separate identifiers. Routing uses structured capability metadata, never a brand prefix.
 - `--input` is the data-driven multimodal entry point: image extensions go through the image channel, video extensions go through the video channel, and audio extensions go through the audio channel. Other extensions are **silently discarded** in video tasks (content-generation has no input_file slot) and are not recognized as reference images in image tasks.
-- The order of multiple `--input` values in video tasks is meaningful: the first image is used as the first frame by default. If you want to express "this image is a reference asset, not the first frame", use the `ref:` prefix.
+- Multiple `--input` values do not imply "the first image is always the first frame". Choose the mode first, then give every asset an explicit `first_frame:` / `last_frame:` / `reference_image:` / `reference_video:` / `reference_audio:` role. Omit the role only for single-image I2V when the model accepts positional inference.
 - For image generation, it is recommended to start from `1920x1920`. Sizes such as `1024x1024` may currently be rejected directly by the backend.
 - Image generation usually completes in a few seconds, while video generation may take tens of seconds to several minutes.
 - **Presigned URLs expire after 24h**: `output_url` can only be downloaded with HTTP `GET` within a short time (note that it is not `HEAD`, because the signature is bound to the method). For persistent storage, rely on `local_path` or download in time.

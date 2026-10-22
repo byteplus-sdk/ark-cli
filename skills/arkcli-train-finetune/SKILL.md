@@ -8,15 +8,29 @@ description: Create, query, and manage model fine-tuning jobs in BytePlus ModelA
 First read [`../arkcli-shared/SKILL.md`](../arkcli-shared/SKILL.md) and follow its authentication, output, safety, and confirmation rules.
 Before running control-plane commands, confirm that the active profile, project, and region all belong to the intended BytePlus environment.
 
+## Execution plane and credentials
+
+- `arkcli train finetune *`, `arkcli dataset *`, and `arkcli models finetune-config *` are **control-plane**
+  commands. Authenticate with BytePlus SSO / STS via `arkcli auth status`; do not pass data-plane
+  `--api-key` or `--base-url`, which fail fast on control-plane commands.
+- An API key from `.env` is for inference data-plane calls only. It cannot create fine-tuning jobs or upload
+  training data. SFT / LoRA / DPO / RL are training jobs, not plan-model inference calls; do not route them
+  to `+chat` or `+gen`.
+- Local `--train-file` / `--validation-file` inputs are uploaded by ArkCLI to the managed BytePlus TOS; the
+  final job request uses `TosBucket` / `TosPaths`. Do not require a manual upload or pass a local path as the
+  backend data address.
+
 ## When To Trigger and Scope
 
 - Create a fine-tuning job: read [`references/create.md`](references/create.md).
 - List or filter fine-tuning jobs: read [`references/list.md`](references/list.md).
+- Download the training/validation data used by a job: read [`references/download.md`](references/download.md).
 - Retrieve, observe, or operate a specific job: read [`references/manage.md`](references/manage.md).
 - Select a step by metrics, export artifacts, and deploy: read [`references/export-deploy.md`](references/export-deploy.md).
 - Do not directly manage datasets. Accept local files, BytePlus TOS URIs, `ds-*/dsv-*` references, and model-supported presets. Use [`../arkcli-datasets/SKILL.md`](../arkcli-datasets/SKILL.md) to create or maintain Dataset resources.
 - Use `--train-dataset` for an ordinary managed Dataset with the default `Multiplier=1`; use repeatable `--train-path` for multiple references, scaling, or sampling. Each entry sets at most one of `multiplier` or `sample_count`; omitting both keeps `Multiplier=1`. Each preset must choose exactly one of `inject_multiplier` or `inject_sample_count`.
 - Orchestrate metric analysis and artifact export in this skill. For custom model details, preparation of deployable versions, and endpoint creation, follow the model registry and deployment skills.
+- When the user says "my jobs / jobs I created / submitted by me", add `--mine` to `train finetune list`; do not list the whole account and guess the creator locally.
 - Do not use the low-level API Explorer as the default entry point.
 
 Load only the reference required for the current task. Do not read every reference merely to become familiar with all commands.

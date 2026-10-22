@@ -2,6 +2,11 @@
 
 Both `--train-file` and `--validation-file` upload to TOS before an online `--estimate` or real submission. The resolved `data.TrainingSet` and `data.ValidationSet` use `TosBucket` and `TosPaths`; local paths are not sent to the server. `uploaded_files` includes both sets, while training token estimation uses only the training set. Local validation files also upload when training data already uses a TOS reference. An upload failure stops submission. `--estimate` uploads files without creating a training job.
 
+> **Execution plane:** `train finetune create` and `--estimate` are control-plane commands authenticated
+> by BytePlus SSO / STS. Do not pass `--api-key` / `--base-url`; the API key in `.env` is for data-plane
+> inference only and cannot create jobs or upload training data. Local training/validation files are
+> uploaded by the CLI through `--train-file` / `--validation-file` to managed BytePlus TOS.
+
 Creation still returns `id` and `url`. BytePlus continues to return an empty `url`; do not invent a console link.
 
 - Follow the sequence below. If the user provides insufficient information, query current capabilities and make recommendations.

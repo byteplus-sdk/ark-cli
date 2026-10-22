@@ -64,6 +64,20 @@ Load detailed shared guidance only when needed:
 
 Choose commands from the user's goal, not from an API action name.
 
+### Control plane vs data plane
+
+Different commands use different credentials. Passing `--api-key` / `--base-url` to a command that
+does not consume data-plane overrides fails fast, so do not treat them as universal credentials.
+
+| Capability | Plane | Credential | Constraint |
+|---|---|---|---|
+| Model catalog, Endpoint, custom model, Dataset, fine-tuning, usage/billing management | **Control plane** | BytePlus SSO-derived STS (`arkcli auth status` / `auth login`) | Does not consume `--api-key` / `--base-url`; an API key from `.env` is for inference only |
+| `+chat` / `+gen` / `+understand` / Managed Agent session and files / raw runtime calls | **Data plane** | Profile API key, plan seat key, or explicit `--api-key` (with `--base-url` when required) | Inference/session only; do not use it to change control-plane resources |
+
+Fine-tuning is a control-plane workflow, not a plan-model inference call. `train finetune create` rejects
+`--api-key`. Use `--train-file` / `--validation-file` so ArkCLI uploads local data to managed TOS, and do
+not route SFT / LoRA / DPO / RL to `+chat` or `+gen`.
+
 For explicit documentation requests, a documentation URL, or missing product
 knowledge delegated by an owning Skill, use [docs](../arkcli-docs/SKILL.md).
 Read the returned Markdown before answering. Do not replace resource operations,
