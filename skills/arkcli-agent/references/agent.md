@@ -1,5 +1,7 @@
 # Agent
 
+`BaseAgent`, when returned by the service, is retained in JSON/YAML and shown as `base_agent` in table output. `+new-agent --fork` preserves it; an explicit create `--base-agent` overrides the source value. It is a base type, not an `agent-*` resource ID. Do not infer Volc Vision/Ultra availability in BytePlus from this shared field support or use Volc-specific templates. Agent update and Session overrides do not expose base-type changes.
+
 When configuring `speed/thinking/reasoning_effort/service_tier`, query the target model's [runtime parameter metadata](model-config.md). Values from another model are not universal enums.
 
 ## Create Agent SOP

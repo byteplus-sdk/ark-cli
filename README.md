@@ -8,6 +8,14 @@ BytePlus Ark CLI provides command-line access and Agent Skills for BytePlus Ark.
 npm install -g @byteplus/ark-cli@latest
 ```
 
+To skip Skills downloads and automatic installation for this npm install:
+
+```shell
+ARKCLI_SKIP_SKILLS=1 npm install -g @byteplus/ark-cli@latest
+```
+
+The same environment variable works across all products and internal/public npm packages. Only the exact value `1` enables it; all other values preserve the default behavior. CLI binary download, verification, installation, and initialization still run. Skills already included in the npm package remain part of that package. The setting is not persisted and does not remove existing Skills; you can still run `arkcli +connect` manually later. Do not substitute `ARKCLI_SKIP_POSTINSTALL=1`, which skips the entire hook, including binary downloads.
+
 After installing the CLI, authenticate and install the bundled Skills into the supported local agents:
 
 ```shell
