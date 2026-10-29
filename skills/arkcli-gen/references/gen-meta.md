@@ -1,9 +1,9 @@
 ---
 name: gen-meta
-description: Reference for the three standard CRUD commands arkcli gen get / list / delete, used with the +gen workflow to manage submitted asynchronous generation tasks (video / 3D / future extensions).
+description: Reference for arkcli gen get / list / delete and local gallery management commands.
 ---
 
-# gen get / list / delete
+# gen get / list / delete / gallery
 
 This is the "reconciliation side" of `+gen`: `+gen` submits generation tasks, while these three commands query task status afterward, list historical tasks, and delete completed tasks.
 
@@ -12,6 +12,8 @@ This is the "reconciliation side" of `+gen`: `+gen` submits generation tasks, wh
 - `gen get <task-id>`: You already have a `task_id` and want to retrieve the latest task status, including `output_url` / `usage` / `error`.**Once a task is `succeeded`, `gen get` automatically downloads the output to the local machine** (current directory by default, file name `<task-id>.mp4`), consistent with the persistence behavior of `+gen --wait`; `--save-to=""` can be disabled.
 - `gen list`: List asynchronous tasks under the current account, with filtering by `status` / `model` / `service-tier` / `task-id`.
 - `gen delete <task-id>`: Delete a completed task record. **Destructive and irreversible; must confirm with `--yes` when non-interactive**.
+- `gen gallery list`: Inspect locally archived `+gen` images and their disk usage.
+- `gen gallery clean --older-than 168h --yes` / `gen gallery clean --all --yes`: Remove local gallery files.
 
 ## Modality coverage
 
@@ -126,6 +128,22 @@ Do not add `--yes` to the preview command, do not treat a request to preview as 
 | `gen get <id>` | `arkcli api arkruntime.get_content_generation_task --params '{"id":"<id>"}'` |
 | `gen list ...` | `arkcli api arkruntime.list_content_generation_tasks --params '{"page_num":1,"filter":{...}}'` |
 | `gen delete <id>` | `arkcli api arkruntime.delete_content_generation_task --params '{"id":"<id>"}'` |
+
+### gen gallery
+
+`gen gallery` only touches local state and does not call the control plane:
+
+```bash
+arkcli gen gallery list
+arkcli gen gallery clean --older-than 168h --yes
+arkcli gen gallery clean --all --yes
+```
+
+| flag | Description |
+|---|---|
+| `--older-than <duration>` | Delete files older than this duration (Go duration such as `168h`; `30d` is not accepted). |
+| `--all` | Delete every regular file in the gallery; mutually exclusive with `--older-than`. |
+| `--yes` | Skip the interactive confirmation; required in non-interactive mode. |
 
 CLI subcommands are human-friendly wrappers around the raw API; the commands are shorter and the flags are more intuitive. The raw API is still the fallback channel.
 

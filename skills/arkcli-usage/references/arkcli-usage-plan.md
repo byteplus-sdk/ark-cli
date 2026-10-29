@@ -18,6 +18,9 @@ Query subscription quota snapshots. A plan is not queried as a time series; it r
 # issue usage requests only for detected buckets, returning all active subscription balances
 arkcli usage plan
 
+# Human-readable quota card only (no JSON; ANSI-free when piped)
+arkcli usage plan --render
+
 # Explicit product (skip discovery and query one bucket)
 arkcli usage plan --product coding-plan
 arkcli usage plan --product coding-plan-team
@@ -36,6 +39,7 @@ arkcli usage plan --product coding-plan-team --seat seat-001
 | `--product` | No | string | Explicit product ID: `coding-plan` / `coding-plan-team`; omitted means automatic subscription discovery |
 | `--all` | No | bool | Force both products, including unsubscribed buckets. **Mutually exclusive with `--product`** |
 | `--seat` | No | string | Team product only. Omitted: service calls `GetSeatInfo` to find caller seat; provided: skip RPC and use this SeatID (admin view) |
+| `--render` | No | bool | Print only the human-readable quota card, never JSON. Uses color on a TTY and plain Unicode bars in pipes; cannot be combined with explicit `--format` or `--transform` |
 
 ## Default behavior (no `--product` / `--all`)
 

@@ -14,7 +14,7 @@
 Before creation, resolve the model choice and reuse details for that exact version.
 An invalid or retired version is not fixed by activation, changing the prompt, or
 repeating creation. `--tags` takes an array of Key/Value objects, not a map.
-Quote JSON arguments as complete JSON; single-value flags such as `--view summary`
+Quote JSON arguments as complete JSON; single-value flags such as `--model <model-id>`
 need a value. Valid syntax does not prove backend compatibility. Keep the BytePlus
 disclosure/confirmation workflow above; never invent `+deploy --dry-run`.
 
@@ -63,7 +63,6 @@ arkcli +deploy --name my-custom-endpoint --model cm-xxxxx
 | `--yes` | bool | Rerun the previously disclosed command after fresh confirmation to create the billable Endpoint. It does not authorize model activation in non-TTY environments. |
 | `--rate-limit` | JSON string | Rate limit, such as `{"Rpm": 60, "Tpm": 10000, "Ipm": 100}` |
 | `--moderation` | JSON string | Moderation configuration. Strategy: `Basic` / `Customized` / `Default` / `Skip` |
-| `--view` | string | View endpoint details after creation. |
 
 ### Advanced configuration
 

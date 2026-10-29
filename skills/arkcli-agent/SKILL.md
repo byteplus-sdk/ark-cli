@@ -66,6 +66,7 @@ For an explicitly requested self-hosted endpoint or BYOK model, this release cov
 | Create a New Session and Chat | `arkcli +new session <agent-id> --environment-id <env-id>` | [`references/events-chat.md`](references/events-chat.md) |
 | Send Messages to or Stream Replies from a Session | Plain `events send` is write-only; add `--stream` for SSE replies (`--wait` remains a compatibility alias), use `--poll` for long work, or follow with `+tail`. Streaming requests Agent message/thinking deltas by default; use `--no-event-deltas` for complete events only | [`references/events-chat.md`](references/events-chat.md) |
 | Compact Session Context | `arkcli agent session compact <session-id> [--instructions <text|@file>]` | [`references/events-chat.md`](references/events-chat.md) |
+| Configure automatic context compaction | Agent create/update `--context-management`; new Session `--agent-overrides` | [`references/context-management.md`](references/context-management.md) |
 | Diagnose or Export a Session | `arkcli +debug <session-id>` or `arkcli +export <session-id>` | [`references/debug-export.md`](references/debug-export.md) |
 | Upload a File to an Existing Session | `arkcli agent session resources add <session-id> --path <file>` | [`references/session-files.md`](references/session-files.md) |
 | Query or Upload Files via the Files API | `arkcli agent file upload/list/get/wait/delete` | [`references/session-files.md`](references/session-files.md) |

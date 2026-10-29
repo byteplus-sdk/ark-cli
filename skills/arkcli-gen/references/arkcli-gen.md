@@ -161,6 +161,7 @@ arkcli +gen --model ep-20260416234150-zsd4v --modality video "A Shiba Inu is run
 | `--extra-body` | No| string (JSON object) | Video task forward-compatibility channel: pass a JSON object string. Its keys are merged into the top-level request body, so you can pass through newly added server-side parameters without upgrading arkcli. Example: `--extra-body '{"new_field":"value"}'` |
 | `--tools` | No| string (repeatable) | Tool switch. Currently supports `web_search`. |
 | `--save-to` | No| string | Local directory for saving generated artifacts. Default is `.` (current directory). Pass `--save-to=""` to explicitly disable auto-download. Download failures do not block the main process. |
+| `--no-gallery` | No| bool | Do not copy generated images into the product state gallery. This can also be disabled with `ARKCLI_NO_GALLERY=1`. |
 
 ## Return values
 
