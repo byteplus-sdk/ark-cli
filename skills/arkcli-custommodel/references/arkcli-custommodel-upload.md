@@ -43,6 +43,13 @@ arkcli models custommodel upload \
 produce a reliable offline plan, so it does not register `--dry-run`. Restate
 and confirm `name/base-model/tos/quantization` before real execution.
 
+## Pre-upload checks
+
+- The CLI paginates the TOS directory and requires top-level `config.json`, at least one `*.safetensors`, and either `tokenizer.json` or `tokenizer_config.json`, matching the console matcher. Nested files, sibling prefixes, and `tokenizer.model` alone do not satisfy these checks.
+- Unreadable directories, missing files, or invalid pagination stop execution before `UploadModel`.
+- `CheckCustomModel` runs only when the account has the `Foundry` feature. `Supported=false` adds the unsupported reasons to the output `message` but still allows upload with the specified base model. Request failures or incomplete responses stop execution.
+- Checks do not change `--base-model` or `--quantization` and do not prove asynchronous import completion. Never use a real upload as a read-only check.
+
 ## Flags
 
 | Parameter | Required | Type | Description |

@@ -149,6 +149,16 @@ The concrete-model picker and persisted Agent model catalog use only
 VirtualModelID entries, plus a synthetic `ark-code-latest` entry. Load labels
 are shown only for `Load.Status=1` with `Load.Level=1/2/3`.
 
+Helper keeps only verified text conversation models in the concrete picker,
+persisted Agent catalog, and explicit `configure --model` selection. Text models
+may accept image, video, or audio input. Image/video generation, embedding,
+dedicated speech, and unverified models are excluded. Plan capability metadata
+takes precedence; ArkModels fills missing fields. Missing output metadata is
+accepted only when the direct ModelName matches a LatestModel text route in the
+same Plan, while `ark-code-latest` remains a dynamic routing entry. Catalog
+failures and empty eligible catalogs stop configuration before Harness writes;
+an explicit `--model` cannot bypass validation.
+
 For an `InvalidParameter` 400 caused by an old ZCode output limit, upgrade
 ArkCLI, rerun the original `arkcli helper configure zcode ...` command, and
 fully quit the ZCode process, reopen it, and start a new session. Switching

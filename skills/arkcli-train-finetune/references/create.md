@@ -112,6 +112,10 @@ Common parameters for `arkcli train finetune create`:
 | `--resource-group` | Stable resource-group ID returned by `resource-group list`. Treat it as opaque and pass it unchanged; the CLI rechecks access, job resource requirements, and availability before estimation and real submission. |
 | `--yes` | Skip CLI confirmation. Add it only after the user reconfirms or explicitly asks for immediate creation. |
 
+`--output-compression-strategies W4A8C16` selects export auto-quantization when the exact model version and training method declare it. Repeat the flag or separate strategies with commas. Creation and online `--estimate` use `OutputConfig.OutputCompressionStrategies`; the estimate JSON includes `output_config`, and the submit summary shows the resolved strategies. This is output configuration, not a training hyperparameter.
+
+Read `items[].quant_modes` from `train finetune capability get` for the exact model version. LoRA types use `LoraModelCompressionChoices`; full training uses `FullModelCompressionChoices`. When the flag is omitted, use the union of `RequiredStrategies` and `DefaultChooseStrategies`. Explicit selections keep all required strategies and may choose from default or optional allowed strategies. Use `--output-compression-strategies=` to keep required strategies only. Unknown strategies or missing capability metadata for an explicit selection fail before upload, activation, or submission. When no strategies are requested and metadata is absent, the output configuration remains omitted. Never assume every model supports W4A8C16 or infer choices from its name. Existing custom models resolve these choices through their exact source base model version.
+
 ## 3. Obtain and validate training data
 
 Do not create or manage platform Dataset resources in this skill. Use [`../../arkcli-datasets/SKILL.md`](../../arkcli-datasets/SKILL.md) when management is required. Job creation accepts:
