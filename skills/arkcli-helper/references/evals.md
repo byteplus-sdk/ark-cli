@@ -71,7 +71,8 @@ Prompt:
 
 Expected behavior:
 
-- Confirm a Platform profile and current SSO sub-user identity.
+- Confirm a Platform profile and current SSO sub-user identity (root
+  accounts skip the ownership check and may select any eligible Endpoint).
 - Verify that `ep-123` is owned by that sub-user, Running, and explicitly
   text-output capable.
 - Reject `--model` and use:

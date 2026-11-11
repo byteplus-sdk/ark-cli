@@ -99,7 +99,9 @@ explaining that impact.
 2. Determine the exact harness, profile type, profile name, and model or
    Endpoint.
 3. For a Platform profile, verify that the Endpoint is owned by the current
-   SSO sub-user, Running, and text-output capable.
+   SSO sub-user, Running, and text-output capable. Root accounts have no
+   sub-user identity; skip the ownership filter and list all eligible
+   Endpoints in the current project.
 4. For Codex, decide whether to use the default `arkcli` profile scope or the
    explicitly requested global scope.
 5. Before `configure` or `reset`, show the exact command and affected settings

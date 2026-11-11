@@ -180,7 +180,8 @@ Platform rules:
 
 - `--endpoint` is required;
 - `--model` is invalid;
-- the current identity must be an SSO sub-user;
+- the current identity must be an SSO sub-user (root accounts skip the
+  ownership filter and see all eligible Endpoints in the project);
 - the Endpoint must be owned by that current sub-user;
 - the Endpoint must be Running;
 - the Endpoint must explicitly support text output.
