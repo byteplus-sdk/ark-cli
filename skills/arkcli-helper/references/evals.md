@@ -3,6 +3,10 @@
 Use these cases to verify BytePlus Helper routing, product boundaries, and
 write safety.
 
+## A newly purchased Coding Plan
+
+A user buys a Coding Plan between two interactive Helper runs. Explain that opening the wizard again detects the subscription or team seat and saves a missing profile before showing the picker. When the subscription expires or the seat is revoked, the picker explains why the saved profile is unavailable. It becomes selectable again on renewal or reassignment; a lookup failure keeps it selectable for a second check.
+
 ## 1. Trigger: Read-only Client Discovery
 
 Prompt:

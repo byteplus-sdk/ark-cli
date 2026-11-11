@@ -47,6 +47,8 @@ Skill and use `arkcli-auth` or `arkcli-profile` only for the blocking recovery
 step. Generic local configuration with no client-integration goal belongs to
 `arkcli-config`.
 
+Each time a user starts the interactive `arkcli helper` wizard, it checks for a personal Coding Plan subscription and a running Coding Plan Team seat. Newly discovered plans are saved as local profiles and appear in the current picker. Expired subscriptions and revoked or unassigned seats appear as unavailable, with the reason. The local profile is preserved and becomes selectable again after renewal or reassignment. When the status is unconfirmed, the profile remains selectable and the wizard checks it again on selection.
+
 ## Product Boundary
 
 Supported profile types:
