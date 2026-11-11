@@ -32,7 +32,7 @@ arkcli agent session upgrade <session-id> \
 | `--agent-version <int>` | Overrides `agent.version`; omitted or 0 preserves the current snapshot, not the latest version |
 | `--model <id-or-object>` | An ID replaces only `agent.model.id`; an object or `@file` replaces the model object in the request |
 | `--speed/--thinking/--reasoning-effort/--service-tier` | Overrides the corresponding snake_case model field, preserving explicit empty strings |
-| `--vault-ids <array>` | JSON/YAML array or `@file`; refresh existing bindings, not add/remove them |
+| `--vault-ids <array>` | JSON/YAML array or `@file`; complete target user Vault set, not a delta; `[]` clears user bindings |
 | `--initial-events <array>` | JSON/YAML array or `@file`; optional or `[]`; the backend accepts only one fixed `/compact` event when nonempty |
 | `--compact[=false]` | true builds the fixed `/compact` event; false sets `initial_events: []`; conflicts with `--initial-events` |
 
@@ -48,7 +48,7 @@ Precedence: load `--file`, replace its entire agent/environment object when the 
 - Model fields: `id/provider/protocol/base_url/headers/token_limits/input_modalities` and the four runtime settings. Creation overrides support the same fields; upgrade emits snake_case without rewriting Header keys or values. See [BYOK](byok.md). Omitted fields are not filled from defaults.
 - Cloud networking replaces the policy; `config.env` merges by key and packages merge by package name, with supplied values/specs winning. Empty env/packages do not clear existing entries. Explicit setup_script replaces it, including an empty string. An environment ID alone does not reload the Environment resource's latest configuration; supply the desired config explicitly.
 - Self-hosted Sessions can upgrade their Agent, but cannot switch environment type or configure customer-owned sandbox networking/packages/env/setup_script. User TOS cannot be changed by upgrade.
-- Vault IDs must equal the current binding set, ignoring order/duplicates. `[]` is valid only when already unbound. This refreshes credentials without changing bindings; do not supply credential secrets.
+- On servers supporting Vault replacement, a nonempty `vault_ids` array replaces all user bindings: include every Vault to retain. Omission or request-file `null` preserves bindings; `[]` clears user bindings while server-managed authorization Vaults remain. The same set refreshes credentials. The server validates existence and account/project access; no Vault is created automatically. Show the binding diff and obtain confirmation, then read back after upgrading. Do not supply credential secrets. BytePlus deployment availability must be verified from the actual response; report older-server rejection without silently substituting another operation.
 
 ## Execution and Verification
 

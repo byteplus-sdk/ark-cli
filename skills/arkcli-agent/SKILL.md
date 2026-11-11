@@ -119,7 +119,7 @@ For an explicitly requested self-hosted endpoint or BYOK model, this release cov
 - After a successful write, capture the ID from structured output and use that literal ID in the next command.
 - If a write times out, first use a separate read command such as `session list/get`, `events list`, or `+debug` to determine whether it succeeded. Do not blindly retry a request whose result is unknown.
 - Retry network interruptions, 429 responses, and 5xx responses only, with bounded exponential backoff. Do not retry validation, authentication, entitlement, permission, or explicit business errors.
-- `events send --stream` automatically falls back from SSE to cursor-based event-list polling after its stream timeout. `--wait` remains a compatibility alias. If both stages time out, continue from the reported cursor instead of sending the user's message again.
+- `events send --stream` automatically falls back to event-list polling. If both stages time out, use [read-only recovery](references/events-chat.md#read-only-recovery-after-send); running `events send --poll` again sends another message. Raw `events list --after` may include history: locate the exact sent event across pages before accepting a terminal event.
 
 ## Command Quick Reference
 

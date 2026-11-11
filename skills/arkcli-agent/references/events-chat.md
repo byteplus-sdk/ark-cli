@@ -4,13 +4,21 @@
 
 ## Event/Chat Experience
 
+### Starting without conversation history
+
+Check `arkcli --version` and the loaded Skill source; upgrading the binary does not automatically refresh installed Skills. Follow shared authentication checks and verify account, project, environment and an MA-compatible key/profile. Never copy resource IDs or credentials from examples. Read a supplied Session with `session get`; otherwise query `session list` and confirm the intended target rather than choosing among multiple candidates. Follow session-files.md for authorized resource creation. Before sending, confirm the Session is not already running or upgrading so another turn's terminal event is not mistaken for this request's completion.
+
 ### Send versus execution exit status
 
 Without waiting, exit 0 only means the message was accepted. `events send --stream`, `--wait`, and `--poll`, including SSE timeout recovery polling, check the turn outcome: failed/terminated execution or a non-normal stop reason such as `retries_exhausted` returns exit 5 with `agent_execution_failed`. The error includes the Session ID and sent cursor and states that the message was accepted; do not automatically resend it. Original error events remain in the event output.
 
 A single tool/model attempt with `is_error=true` does not fail the turn if execution recovers. `requires_action` remains a confirmation boundary, neither failure nor task completion. Read-only `events list/stream` and `+tail` keep their existing exit semantics. Use `--format jsonl`, not `--format json`, for machine-readable streaming.
 
+`session.error.error.retry_status.type=retrying` means the server is retrying: keep waiting, never resend the user message. A later normal `end_turn` is not a failed turn. Exhausted/terminal errors and abnormal terminal states still fail; missing retry_status retains conservative legacy handling. A timeout is not success. Consume backfill in server `order=asc` order, deduplicating without sorting by ID/timestamp or inferring cursor order from IDs.
+
 Choose the entry point based on whether the user expects an Agent reply:
+
+Internal waiting locates the last persisted event ID across list pages and skips its history. If the boundary is not yet persisted, keep waiting rather than accepting an old idle. Transient delta frames are not list cursors. Session-level waiting continues past thread idle to receive usage and the Session terminal event. Raw `events list --after` remains subject to the server contract; do not assume every returned event is new.
 
 | Scenario | Preferred Entry | Completion Requirement |
 | --- | --- | --- |
@@ -57,7 +65,7 @@ arkcli agent session events send <session-id> --type user.message --text "Help m
 - A successful `events send` response means the event was accepted, not that the Agent replied. `--stream` follows the returned cursor through the reliable SSE channel. It streams for up to 120 seconds by default and then falls back to event-list polling for another 120 seconds; use `--wait-timeout` and `--wait-fallback-timeout` to adjust those stages. `--wait` remains a compatibility alias.
 - `--poll` skips streaming and polls the event list until a terminal state. It is useful for long work or unstable streaming connections. The default interval is two seconds and can be changed with `--poll-interval`.
 - `--stream`/`--wait` and `--poll` are mutually exclusive. Explicit `--stream` always opens SSE, including for payloads above about 50 KiB; only legacy `--wait` may return immediately for those payloads. `--raw` keeps complete machine-readable events; `--max-event-chars` affects display only and never changes the payload sent to the Agent.
-- For work that may exceed the current process timeout, send without `--stream/--poll`, retain the returned event cursor, and repeatedly run `events list --after <cursor> --order asc --limit 100 --format json`. Advance the cursor for every new event and stop only at a terminal state.
+- Prefer `events send --poll --wait-timeout <seconds>` within the host process budget. For asynchronous work or a timeout, use the read-only recovery procedure below. Running `events send --poll` again sends a new message, not a continuation of waiting.
 - On a polling timeout or connection interruption, retry the read with the same cursor. Stop immediately for authentication, authorization, validation, entitlement, or other explicit business errors. Never report a timeout as successful completion.
 - Run each step as a separate invocation: create or identify the Session, send the event, extract the cursor, poll events, and optionally fetch final Session metadata. If a write times out, inspect `session get/list` or `events list` before deciding whether to retry it.
 
@@ -65,7 +73,7 @@ arkcli agent session events send <session-id> --type user.message --text "Help m
 - Do not interpret this CLI compatibility as the server supporting atomic batches; for business requirements that need atomic submissions, wait for server support for batch requests.
 - Multiple events can contain different `type`s, and the CLI does not reorder them. For example, sending `user.message` before `user.interrupt` makes the server start the corresponding turn before handling the interrupt; when checking, see the original `user.message`, `user.interrupt`, and interrupted model request. `user.interrupt` must be sent when an active turn exists; sending it for idle sessions produces `session.error: no active turn to cancel`.
 
-- `events list` retrieves historical events with `--after/--before` event cursor, `--since/--created-after/--created-before` time filtering, and `--type` for repeated or comma-separated types. With `--page-all`, the default `limit` is `100`, and the response is merged by `next_page -> page` for `data`.
+- `events list` exposes `--after/--before`, but these flags do not guarantee server-side event-ID filtering. Time conditions include `--since/--created-after/--created-before`; `--type` accepts repeated or comma-separated types. Do not filter out error events when recovering a turn. With `--page-all`, the default `limit` is `100`, following `next_page -> page`.
 - `threads list` supports `--page-all` and `next_page -> page`. `resources list` does not have a pagination contract; do not fake page parameters.
 - `events stream` outputs a human-friendly SSE data or NDJSON line.
 - For a known Session ID, use `arkcli agent session compact <session-id> [--instructions <text|@file>] [--session-thread-id <id>]`. It preflights an idle Session, sends the frontend-compatible slash envelope, and waits after the final sent event cursor. Normal `session.thread_status_idle` and `session.status_idle` events with `stop_reason=end_turn` complete the manual command. `agent.thread_context_compacted` is optional confirmation that compaction actually occurred and may be absent when the backend has no compactable messages. Failure/termination events and timeouts return nonzero.
@@ -98,6 +106,16 @@ arkcli agent session events send <session-id> --type user.message --text "Help m
   - `user.tool_confirmation` must include `tool_use_id`, and `result` can only be `allow` or `deny`.
   - `user.tool_result` is allowed only for `self_hosted` environments. Real execution checks `Config.Type` via `GetSession -> GetEnvironment`; `--dry-run` does not perform that read and does not prove the constraint is satisfied. Real execution and the server remain authoritative.
   - Raw payload can use snake_case; the PascalCase alias is normalized to snake_case before sending.
+
+### Read-only recovery after send
+
+Keep the Session ID, the persisted user event ID returned by send, and the send time. Recovery reads only; it never resends the message.
+
+1. Run `arkcli agent session events list <session-id> --order asc --limit 100 --page-all --page-limit 10 --format json`. Check `next_page` for incomplete pagination and increase the page budget when appropriate.
+2. Locate the exact sent event ID in server order and discard that event and all preceding history. Even when supplying `--after`, perform this check. Never sort or compare IDs/timestamps to infer the boundary.
+3. If the ID is missing, do not accept an old idle: persistence may lag or pages may be missing. Retry reads within a bounded deadline, then report an unconfirmed result. Without a sent ID, use time, original text and thread to identify a unique user event; ambiguity requires clarification, not choosing the latest event or resending.
+4. Consume only subsequent complete events in server order, deduplicate by type + id, and preserve seen identities and failure state between reads. Transient delta frames are not persisted cursors. Session success requires the current turn's normal session.status_idle/end_turn and reply, not thread idle alone; retain usage. Retrying can recover; exhausted/terminal/unknown legacy errors remain conservative failures. Requires_action is pending confirmation.
+5. Read every 2-5 seconds within the total budget. On timeout, report the last state and sent ID. Session metadata showing idle, or exit 0 from read-only +tail/events stream, does not prove this turn succeeded.
 
 ### Remote tool confirmation
 

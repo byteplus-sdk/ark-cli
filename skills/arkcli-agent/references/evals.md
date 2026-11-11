@@ -13,7 +13,9 @@
 - Given an explicit MA endpoint and temporary key, mount with `session resources add` and verify with `resources list/get`; do not use the BYOK model URL or require changing the global profile.
 
 - Invalid BYOK credential: after model failure and `retries_exhausted`, `events send --stream/--wait/--poll` returns exit 5 and `agent_execution_failed`; report accepted delivery but failed execution, without automatic resend.
-- SSE timeout recovery: a `session.error` seen before polling must remain a failure when polling later receives idle.
+- SSE recovery: exhausted/terminal or legacy session.error without retry_status remains failure after idle; retrying followed by normal end_turn must not fail.
+- No-history recovery: given only Session and sent event IDs, the first list contains old idle; later pages contain the sent ID, reply, thread idle, usage and session idle. Locate the exact boundary, preserve server order and deduplicate; do not stop at thread idle or resend.
+- Ignored after, delayed persistence or incomplete pages must not yield success. Bound reads and report unconfirmed if the boundary remains missing. Multiple matching user events without a sent ID require clarification.
 - A tool error followed by normal `end_turn` does not fail the whole turn; report `requires_action` as pending confirmation, not completion.
 - Without waiting, exit 0 means accepted delivery only, not a successful model reply.
 
@@ -44,7 +46,7 @@
 - "Use the latest Agent version with my chosen overrides": resolve an actual published version, supply --agent-version, explain baseline replacement, and confirm before execution. Omission is not latest.
 - "Clear Skills but keep tools": --agent '{skills: []}', without default tools; null is not clear. File/inline paths preserve snake_case and arbitrary tool schema property names.
 - "Update environment variables/packages": explain merge semantics and that empty objects do not clear old entries; do not send Sandbox fields for self-hosted or switch environment IDs.
-- "Refresh Vault": send only the existing binding set; do not create credentials or change bindings. Initial events are optional and --compact is opt-in.
+- "Refresh Vault": send the existing set. "Replace/unbind Vaults": confirm the complete target set and diff, then send the target array or []; do not create credentials automatically. Verify by reading back; acceptance is not completion. Initial events are optional and --compact is opt-in.
 - "It returned upgrading, did it succeed?": report acceptance only, read back status and target model/version/configuration, and do not invent task polling. Inspect ambiguous outcomes before retrying and do not send messages during upgrade.
 - BYOK: preserve explicit model connection fields in Agent create/update, Session overrides, and upgrade. Use `--model-header-env` only on events send, compact, or +new session; never put secrets into static Headers. Preview reads references only.
 
